@@ -1,36 +1,42 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+## Todos
 
-## Getting Started
+-   setup SemVer
+    -   find the best workflow (put the version on the frontend + single command)
+    -   dynamic module set on post-build (script that writes to the module from package.json.version)
+    -   feature branches with git tags
+    -   single command to bump package.json version + git tag with message
+-   drop audio files with the naming convention `<start>-<end>-<source>.wav`
+-   merge audio in a single track
+-   audio player
+    -   waveform
+    -   cursors (current and other breakpoints)
+    -   playback speed
+    -   zoom in/out
+-   text box and selectors for transcribing and other labels
+-   blocks view
+    -   cursors for each breakpoint
+    -   highlight current block in audio the player
+    -   highlight current part of the transcript (opacity, background text color)
+    -   navigate to next/prev block
+    -   click on transcript to move to audio block
+-   adjust block timestamps
+-   store state in a single JSON object (mobx-state-tree)
+-   JSON mode: visualize the ground-truth file and edit directly
+-   run Whisper to do a first pass on transcription
+-   visualize Whisper confidence
+-   run diarization pipeline to label speakers and add speaker turn cursors
+    -   use Pyannote embedding from HuggingFace
+-   turn cursors on/off: blocks, speaker turns, …
+-   export labeled sample
+-   leave comments on blocks for other users
+-   upload existing ground truth
+    -   validate format
 
-First, run the development server:
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Stack
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+-   NextJS (TS)
+-   TailwindCSS (Shadcn/UI)
+-   ONNX + HuggingFace
+-   Sqlite + Prisma
+-   MobX

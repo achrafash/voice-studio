@@ -6,6 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "postinstall": "node ./scripts/update-version.mjs",
     "lint": "next lint"
   },
   "dependencies": {

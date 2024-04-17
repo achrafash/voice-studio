@@ -4,6 +4,8 @@ import { useState } from "react";
 import WavesurferPlayer from "@wavesurfer/react";
 import WaveSurfer from "wavesurfer.js";
 
+import * as Icons from "@heroicons/react/24/outline";
+
 const SKIP_STEP = 2;
 
 export default function AudioPlayer(props: { url: string }) {
@@ -44,29 +46,11 @@ export default function AudioPlayer(props: { url: string }) {
             </div>
             <div
                 id="controls"
-                className="flex w-full justify-between space-x-4 py-2 font-mono text-sm"
+                className="grid w-full grid-cols-3 gap-4 py-4 font-mono text-sm"
             >
-                <div className="flex items-center space-x-4">
-                    <button
-                        onClick={() =>
-                            wavesurfer && wavesurfer.skip(-SKIP_STEP)
-                        }
-                    >
-                        {"<<"}
-                    </button>
-                    <button
-                        onClick={() => wavesurfer && wavesurfer.playPause()}
-                    >
-                        {isPlaying ? "pause" : "play"}
-                    </button>
-                    <button
-                        onClick={() => wavesurfer && wavesurfer.skip(SKIP_STEP)}
-                    >
-                        {">>"}
-                    </button>
-                </div>
                 <select
                     name="playback-speed"
+                    className="w-min text-xs text-gray-800"
                     value={playbackSpeed}
                     onChange={(e) => {
                         const value = Number(e.target.value) ?? 1;
@@ -79,7 +63,31 @@ export default function AudioPlayer(props: { url: string }) {
                     <option value={2}>2</option>
                 </select>
 
-                <div className="rounded border p-1 font-mono text-xs text-gray-600">
+                <div className="mx-auto flex items-center space-x-4">
+                    <button
+                        onClick={() =>
+                            wavesurfer && wavesurfer.skip(-SKIP_STEP)
+                        }
+                    >
+                        <Icons.BackwardIcon width={16} />
+                    </button>
+                    <button
+                        onClick={() => wavesurfer && wavesurfer.playPause()}
+                    >
+                        {isPlaying ? (
+                            <Icons.PauseIcon width={16} />
+                        ) : (
+                            <Icons.PlayIcon width={16} />
+                        )}
+                    </button>
+                    <button
+                        onClick={() => wavesurfer && wavesurfer.skip(SKIP_STEP)}
+                    >
+                        <Icons.ForwardIcon width={16} />
+                    </button>
+                </div>
+
+                <div className="ml-auto w-fit rounded border p-1 font-mono text-xs text-gray-600">
                     <input
                         type="text"
                         className="w-12 focus:outline-none"

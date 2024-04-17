@@ -9,6 +9,7 @@ const SKIP_STEP = 2;
 export default function AudioPlayer(props: { url: string }) {
     const [wavesurfer, setWavesurfer] = useState<WaveSurfer>();
     const [isPlaying, setIsPlaying] = useState(false);
+    const [playbackSpeed, setPlaybackSpeed] = useState(1);
 
     return (
         <div className="mx-auto flex max-w-xl flex-col items-center">
@@ -25,6 +26,7 @@ export default function AudioPlayer(props: { url: string }) {
                     autoCenter={true}
                     autoScroll={true}
                     cursorColor={"#c2410c"}
+                    audioRate={playbackSpeed}
                     onReady={(wave) => {
                         setWavesurfer(wave);
                         setIsPlaying(false);
@@ -56,6 +58,20 @@ export default function AudioPlayer(props: { url: string }) {
                         {">>"}
                     </button>
                 </div>
+                <select
+                    name="playback-speed"
+                    value={playbackSpeed}
+                    onChange={(e) => {
+                        const value = Number(e.target.value) ?? 1;
+                        setPlaybackSpeed(value);
+                    }}
+                >
+                    <option value={0.7}>0.7</option>
+                    <option value={1}>1</option>
+                    <option value={1.5}>1.5</option>
+                    <option value={2}>2</option>
+                </select>
+
             </div>
         </div>
     );

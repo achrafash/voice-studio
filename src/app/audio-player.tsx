@@ -10,6 +10,8 @@ export default function AudioPlayer(props: { url: string }) {
     const [wavesurfer, setWavesurfer] = useState<WaveSurfer>();
     const [isPlaying, setIsPlaying] = useState(false);
     const [playbackSpeed, setPlaybackSpeed] = useState(1);
+    const [currentTime, setCurrentTime] = useState(0);
+    const [duration, setDuration] = useState(1);
 
     return (
         <div className="mx-auto flex max-w-xl flex-col items-center">
@@ -30,9 +32,14 @@ export default function AudioPlayer(props: { url: string }) {
                     onReady={(wave) => {
                         setWavesurfer(wave);
                         setIsPlaying(false);
+                        setCurrentTime(wave.getCurrentTime());
+                        setDuration(wave.getDuration());
                     }}
                     onPlay={() => setIsPlaying(true)}
                     onPause={() => setIsPlaying(false)}
+                    onTimeupdate={(wave) =>
+                        setCurrentTime(wave.getCurrentTime())
+                    }
                 />
             </div>
             <div
@@ -72,6 +79,21 @@ export default function AudioPlayer(props: { url: string }) {
                     <option value={2}>2</option>
                 </select>
 
+                <div className="rounded border p-1 font-mono text-xs text-gray-600">
+                    <input
+                        type="text"
+                        className="w-12 focus:outline-none"
+                        value={currentTime.toFixed(2)}
+                        onChange={(e) => {
+                            wavesurfer &&
+                                wavesurfer.setTime(Number(e.target.value));
+                        }}
+                    />
+                    <span className="text-gray-300">/</span>
+                    <span className="inline-block w-12 text-right">
+                        {duration.toFixed(2)}
+                    </span>
+                </div>
             </div>
         </div>
     );

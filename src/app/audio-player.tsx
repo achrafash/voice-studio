@@ -1,20 +1,38 @@
 "use client";
 
-import { useState } from "react";
-import WavesurferPlayer from "@wavesurfer/react";
-import WaveSurfer from "wavesurfer.js";
-
+import { useMemo, useRef, useState } from "react";
 import * as Icons from "@heroicons/react/24/outline";
+import { useWavesurfer } from "@wavesurfer/react";
+import Regions from "wavesurfer.js/dist/plugins/regions.esm.js";
 
 const SKIP_STEP = 2;
 
+const regions = Regions.create();
+
 export default function AudioPlayer(props: { url: string }) {
-    const [wavesurfer, setWavesurfer] = useState<WaveSurfer>();
-    const [isPlaying, setIsPlaying] = useState(false);
     const [playbackSpeed, setPlaybackSpeed] = useState(1);
-    const [currentTime, setCurrentTime] = useState(0);
-    const [duration, setDuration] = useState(1);
     const [breakpoints, setBreakpoints] = useState<number[]>([]);
+
+    const waveRef = useRef(null);
+
+    const { wavesurfer, isPlaying, currentTime, isReady } = useWavesurfer({
+        container: waveRef,
+        url: props.url,
+        waveColor: "#9ca3af",
+        progressColor: "#fb923c",
+        dragToSeek: true,
+        normalize: true,
+        barGap: 1,
+        height: 60,
+        barHeight: 20,
+        autoCenter: true,
+        autoScroll: true,
+        cursorColor: "#c2410c",
+        plugins: useMemo(() => {
+            regions.clearRegions();
+            return [regions];
+        }, [props.url]),
+    });
 
     return (
         <div className="mx-auto flex max-w-xl flex-col items-center">
@@ -25,38 +43,53 @@ export default function AudioPlayer(props: { url: string }) {
                 <button
                     className="rounded border bg-gray-50 p-1 text-xs"
                     onClick={() => {
-                        setBreakpoints((prev) => [...prev, currentTime].sort());
+                        const newBreakpoints = [
+                            ...breakpoints,
+                            currentTime,
+                        ].sort((a, b) => a - b);
+
+                        if (breakpoints.length === 0) {
+                            regions.addRegion({
+                                start: 0,
+                                end: currentTime,
+                                drag: true,
+                                resize: true,
+                            });
+                        } else if (currentTime > breakpoints.slice(-1)[0]) {
+                            console.log({
+                                breakpoints,
+                                last: breakpoints.slice(-1)[0],
+                                currentTime,
+                            });
+                            regions.addRegion({
+                                start: breakpoints.slice(-1)[0],
+                                end: currentTime,
+                                drag: true,
+                                resize: true,
+                            });
+                        } else {
+                            regions.clearRegions();
+                            newBreakpoints.forEach((breakpoint, index) => {
+                                regions.addRegion({
+                                    start:
+                                        index === 0
+                                            ? 0
+                                            : newBreakpoints[index - 1],
+                                    end: breakpoint,
+                                    drag: true,
+                                    resize: true,
+                                });
+                            });
+                        }
+
+                        setBreakpoints(newBreakpoints);
                     }}
                 >
                     <Icons.ScissorsIcon width={16} />
                 </button>
             </div>
             <div className="w-full">
-                <WavesurferPlayer
-                    url={props.url}
-                    waveColor={"#9ca3af"}
-                    progressColor={"#fb923c"}
-                    dragToSeek={true}
-                    normalize={true}
-                    barGap={1}
-                    height={60}
-                    barHeight={20}
-                    autoCenter={true}
-                    autoScroll={true}
-                    cursorColor={"#c2410c"}
-                    audioRate={playbackSpeed}
-                    onReady={(wave) => {
-                        setWavesurfer(wave);
-                        setIsPlaying(false);
-                        setCurrentTime(wave.getCurrentTime());
-                        setDuration(wave.getDuration());
-                    }}
-                    onPlay={() => setIsPlaying(true)}
-                    onPause={() => setIsPlaying(false)}
-                    onTimeupdate={(wave) =>
-                        setCurrentTime(wave.getCurrentTime())
-                    }
-                />
+                <div ref={waveRef} id="waveform" />
             </div>
             <div
                 id="controls"
@@ -69,6 +102,7 @@ export default function AudioPlayer(props: { url: string }) {
                     onChange={(e) => {
                         const value = Number(e.target.value) ?? 1;
                         setPlaybackSpeed(value);
+                        wavesurfer && wavesurfer.setPlaybackRate(value);
                     }}
                 >
                     <option value={0.7}>0.7</option>
@@ -113,7 +147,7 @@ export default function AudioPlayer(props: { url: string }) {
                     />
                     <span className="text-gray-300">/</span>
                     <span className="inline-block w-12 text-right">
-                        {duration.toFixed(2)}
+                        {wavesurfer && wavesurfer.getDuration().toFixed(2)}
                     </span>
                 </div>
             </div>

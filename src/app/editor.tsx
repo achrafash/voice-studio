@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useWavesurfer } from "@wavesurfer/react";
 import RegionsPlugin from "wavesurfer.js/dist/plugins/regions.esm.js";
 import Toolbar from "./toolbar";
@@ -33,23 +33,7 @@ export default function Editor(props: EditorProps) {
     );
 
     const waveRef = useRef(null);
-
-    const regionsPlugin = useMemo(() => {
-        const regionsPlugin = new RegionsPlugin();
-        regionsPlugin.on("region-updated", (region) => {
-            // TODO: update the associated block (use the created id?)
-        });
-
-        regionsPlugin.on("region-in", (region) => {
-            setActiveBlockId(region.id);
-        });
-        regionsPlugin.on("region-out", (region) => {
-            // FIXME: not sure this works properly (region.id does not match the expected activeBlockId)
-            console.log("region-out", { region, activeBlockId });
-            if (activeBlockId === region.id) setActiveBlockId(undefined);
-        });
-        return regionsPlugin;
-    }, []);
+    const regionsPlugin = useMemo(() => new RegionsPlugin(), []);
 
     const { wavesurfer, isPlaying, currentTime, isReady } = useWavesurfer({
         url: props.track.url,
@@ -69,6 +53,37 @@ export default function Editor(props: EditorProps) {
             return [regionsPlugin];
         }, []),
     });
+
+    useEffect(() => {
+        if (!isReady) return;
+
+        regionsPlugin.on("region-updated", (region) => {
+            setTranscript((prev) => ({
+                ...prev,
+                blocks: prev.blocks.map((block) =>
+                    block.id !== region.id
+                        ? block
+                        : {
+                              ...block,
+                              from: region.start,
+                              to: region.end,
+                          },
+                ),
+            }));
+        });
+
+        regionsPlugin.on("region-in", (region) => {
+            console.log("region-in", { region, activeBlockId });
+            setActiveBlockId(region.id);
+        });
+
+        regionsPlugin.on("region-out", (region) => {
+            console.log("region-out", { region, activeBlockId });
+            if (activeBlockId === region.id) setActiveBlockId(undefined);
+        });
+
+        return () => regionsPlugin.unAll();
+    }, [isReady, activeBlockId]);
 
     function handleHighlight() {
         if (isHighlighting && highlightStart) {
@@ -105,39 +120,54 @@ export default function Editor(props: EditorProps) {
                     currentTime={currentTime}
                     duration={wavesurfer.getDuration()}
                     isPlaying={isPlaying}
-                    onChange={(kv) => console.log({ kv })}
+                    onChange={(kv) => {
+                        if (kv["playbackSpeed"]) {
+                            wavesurfer.setOptions({
+                                audioRate: kv["playbackSpeed"],
+                            });
+                        }
+                        if (kv["time"]) {
+                            wavesurfer.setTime(kv["time"]);
+                        }
+                    }}
                     onPlayPause={() => wavesurfer.playPause()}
                     onSkip={(step) => wavesurfer.skip(step)}
                 />
             )}
+            {activeBlockId && (
+                <div className="relative">
+                    <textarea
+                        key={activeBlockId}
+                        name="transcription"
+                        rows={10}
+                        placeholder="Start transcribing"
+                        defaultValue={
+                            transcript.blocks.find(
+                                (block) => block.id === activeBlockId,
+                            )?.text ?? ""
+                        }
+                        onChange={(e) => {
+                            if (!activeBlockId) return;
+                            setTranscript((prev) => ({
+                                ...prev,
+                                blocks: prev.blocks.map((block) =>
+                                    block.id !== activeBlockId
+                                        ? block
+                                        : {
+                                              ...block,
+                                              text: e.target.value,
+                                          },
+                                ),
+                            }));
+                        }}
+                        className="w-full resize-y rounded border p-2 text-sm"
+                    />
 
-            <textarea
-                key={activeBlockId}
-                name="transcription"
-                rows={10}
-                placeholder="Start transcribing"
-                disabled={activeBlockId === undefined}
-                defaultValue={
-                    transcript.blocks.find(
-                        (block) => block.id === activeBlockId,
-                    )?.text ?? ""
-                }
-                onChange={(e) => {
-                    if (!activeBlockId) return;
-                    setTranscript((prev) => ({
-                        ...prev,
-                        blocks: prev.blocks.map((block) =>
-                            block.id !== activeBlockId
-                                ? block
-                                : {
-                                      ...block,
-                                      text: e.target.value,
-                                  },
-                        ),
-                    }));
-                }}
-                className="w-full resize-y rounded border p-2 text-sm"
-            />
+                    <span className="absolute right-0 top-0 m-2 rounded border bg-white px-1.5 py-0.5 text-xs text-gray-500">
+                        {activeBlockId}
+                    </span>
+                </div>
+            )}
             <pre className="w-full rounded border bg-gray-100 p-2 font-mono text-xs">
                 <code>{JSON.stringify(transcript, null, 2)}</code>
             </pre>

@@ -14,9 +14,23 @@ export default function AudioPlayer(props: { url: string }) {
     const [playbackSpeed, setPlaybackSpeed] = useState(1);
     const [currentTime, setCurrentTime] = useState(0);
     const [duration, setDuration] = useState(1);
+    const [breakpoints, setBreakpoints] = useState<number[]>([]);
 
     return (
         <div className="mx-auto flex max-w-xl flex-col items-center">
+            <div
+                id="commands"
+                className="flex w-full items-center justify-end space-x-2 py-2"
+            >
+                <button
+                    className="rounded border bg-gray-50 p-1 text-xs"
+                    onClick={() => {
+                        setBreakpoints((prev) => [...prev, currentTime].sort());
+                    }}
+                >
+                    <Icons.ScissorsIcon width={16} />
+                </button>
+            </div>
             <div className="w-full">
                 <WavesurferPlayer
                     url={props.url}

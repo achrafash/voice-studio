@@ -111,7 +111,17 @@ export default function Editor(props: EditorProps) {
 
     return (
         <div className="mx-auto w-full max-w-xl p-8">
-            {wavesurfer && isReady && <Toolbar onHighlight={handleHighlight} />}
+            {wavesurfer && isReady && (
+                <Toolbar
+                    onHighlight={handleHighlight}
+                    onExport={() => ({
+                        ...transcript,
+                        blocks: transcript.blocks.sort(
+                            (a, b) => a.from - b.from,
+                        ),
+                    })}
+                />
+            )}
 
             <div id="waveform" ref={waveRef} />
 

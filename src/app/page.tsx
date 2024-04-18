@@ -12,6 +12,7 @@ function parseFilename(fname: string) {
 export default function App() {
     const [track, setTrack] = useState<{
         start: number;
+        end: number;
         source: string;
         url: string;
     }>();
@@ -24,6 +25,7 @@ export default function App() {
 
         setTrack({
             start: Number(start),
+            end: Number(end),
             source,
             url: URL.createObjectURL(files[0]),
         });

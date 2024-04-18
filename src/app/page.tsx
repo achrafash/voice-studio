@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import AudioPlayer from "./audio-player";
+import Editor from "./editor";
 
 function parseFilename(fname: string) {
     // <start_ts>-<end_ts>-<source>.wav
@@ -9,14 +9,26 @@ function parseFilename(fname: string) {
     return { start, end, source };
 }
 
-export default function Home() {
-    const [audio, setAudio] = useState<File[]>([]);
+export default function App() {
+    const [track, setTrack] = useState<{
+        start: number;
+        end: number;
+        source: string;
+        url: string;
+    }>();
 
-    function onUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    async function onUpload(e: React.ChangeEvent<HTMLInputElement>) {
         const files = e.target.files;
         if (!files || files.length === 0) return;
 
-        setAudio(Array.from(files));
+        const { start, end, source } = parseFilename(files[0].name);
+
+        setTrack({
+            start: Number(start),
+            end: Number(end),
+            source,
+            url: URL.createObjectURL(files[0]),
+        });
     }
 
     return (
@@ -33,29 +45,15 @@ export default function Home() {
                         type="file"
                         multiple
                         name="audio_files"
+                        id="audio_files"
                         className="border p-2 text-sm"
                         accept=".wav"
                         onChange={onUpload}
                     />
                 </div>
-                <div className="w-full font-mono text-xs">
-                    {audio.map((audio, index) => {
-                        const { start, end, source } = parseFilename(
-                            audio.name,
-                        );
-                        return (
-                            <p key={index}>
-                                {start} | {end} ({source})
-                            </p>
-                        );
-                    })}
-                </div>
             </form>
-            <div>
-                {audio.length > 0 && (
-                    <AudioPlayer url={URL.createObjectURL(audio[0])} />
-                )}
-            </div>
+
+            {track && <Editor track={track} />}
         </>
     );
 }

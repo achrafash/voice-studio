@@ -49,6 +49,7 @@ export default function Editor(props: EditorProps) {
         autoCenter: true,
         autoScroll: true,
         cursorColor: "#c2410c",
+        minPxPerSec: 10,
         plugins: useMemo(() => {
             return [regionsPlugin];
         }, []),
@@ -111,39 +112,6 @@ export default function Editor(props: EditorProps) {
 
     return (
         <div className="mx-auto w-full max-w-xl p-8">
-            {wavesurfer && isReady && (
-                <Toolbar
-                    onHighlight={handleHighlight}
-                    onExport={() => ({
-                        ...transcript,
-                        blocks: transcript.blocks.sort(
-                            (a, b) => a.from - b.from,
-                        ),
-                    })}
-                />
-            )}
-
-            <div id="waveform" ref={waveRef} />
-
-            {wavesurfer && isReady && (
-                <Controls
-                    currentTime={currentTime}
-                    duration={wavesurfer.getDuration()}
-                    isPlaying={isPlaying}
-                    onChange={(kv) => {
-                        if (kv["playbackSpeed"]) {
-                            wavesurfer.setOptions({
-                                audioRate: kv["playbackSpeed"],
-                            });
-                        }
-                        if (kv["time"]) {
-                            wavesurfer.setTime(kv["time"]);
-                        }
-                    }}
-                    onPlayPause={() => wavesurfer.playPause()}
-                    onSkip={(step) => wavesurfer.skip(step)}
-                />
-            )}
             {activeBlockId && (
                 <div className="relative">
                     <textarea
@@ -177,6 +145,43 @@ export default function Editor(props: EditorProps) {
                         {activeBlockId}
                     </span>
                 </div>
+            )}
+
+            {wavesurfer && isReady && (
+                <Toolbar
+                    onHighlight={handleHighlight}
+                    onExport={() => ({
+                        ...transcript,
+                        blocks: transcript.blocks.sort(
+                            (a, b) => a.from - b.from,
+                        ),
+                    })}
+                />
+            )}
+
+            <div id="waveform" ref={waveRef} />
+
+            {wavesurfer && isReady && (
+                <Controls
+                    currentTime={currentTime}
+                    duration={wavesurfer.getDuration()}
+                    isPlaying={isPlaying}
+                    onChange={(kv) => {
+                        if (kv["playbackSpeed"]) {
+                            wavesurfer.setOptions({
+                                audioRate: kv["playbackSpeed"],
+                            });
+                        }
+                        if (kv["time"]) {
+                            wavesurfer.setTime(kv["time"]);
+                        }
+                        if (kv["zoom"]) {
+                            wavesurfer.zoom(kv["zoom"]);
+                        }
+                    }}
+                    onPlayPause={() => wavesurfer.playPause()}
+                    onSkip={(step) => wavesurfer.skip(step)}
+                />
             )}
             <pre className="w-full rounded border bg-gray-100 p-2 font-mono text-xs">
                 <code>{JSON.stringify(transcript, null, 2)}</code>

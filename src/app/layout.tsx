@@ -16,14 +16,15 @@ export default function RootLayout({
         <html lang="en">
             <body>
                 {children}
-                <footer className="fixed inset-x-0 bottom-0 border-t px-8 py-4 text-xs text-gray-500">
-                    <p>
-                        Quill Annote{" "}
-                        <span className="w-min rounded bg-gray-200/50 px-1.5 py-0.5 text-gray-400">
-                            v{VERSION}
+                <div className="absolute bottom-0 right-0 m-4">
+                    <div className="inline-flex w-min cursor-default rounded-full border border-slate-200 bg-slate-100/50 px-2.5 py-1 text-xs text-slate-400 backdrop-blur-lg">
+                        <span className="">v</span>
+                        &thinsp;
+                        <span className="slashed-zero tabular-nums">
+                            {VERSION}
                         </span>
-                    </p>
-                </footer>
+                    </div>
+                </div>
             </body>
         </html>
     );

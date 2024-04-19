@@ -15,7 +15,7 @@ interface ToolbarProps {
 
 export default function Toolbar(props: ToolbarProps) {
     return (
-        <div className="flex items-center space-x-2 py-4">
+        <div className="flex items-center space-x-2 p-2">
             <TooltipProvider>
                 <Tooltip>
                     <TooltipTrigger>

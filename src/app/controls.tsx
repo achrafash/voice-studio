@@ -1,5 +1,5 @@
 import { useState } from "react";
-import * as Icons from "@heroicons/react/24/outline";
+import * as Icons from "@heroicons/react/24/solid";
 import {
     Select,
     SelectContent,
@@ -107,19 +107,17 @@ export default function Controls(props: ControlsProps) {
                 </Button>
             </div>
 
-            <div className="ml-auto w-fit rounded border p-1 font-mono text-xs text-gray-600">
+            <div className="ml-auto flex h-full items-center space-x-2 rounded-full border border-slate-200 bg-white px-3 font-mono text-xs text-slate-600">
                 <input
                     type="text"
-                    className="w-12 focus:outline-none"
+                    className="w-[3rem] focus:outline-none"
                     value={props.currentTime.toFixed(2)}
                     onChange={(e) => {
                         props.onChange({ time: Number(e.target.value) });
                     }}
                 />
-                <span className="text-gray-300">/</span>
-                <span className="inline-block w-12 text-right">
-                    {props.duration.toFixed(2)}
-                </span>
+                <span className="text-slate-300">/</span>
+                <span className="">{props.duration.toFixed(2)}</span>
             </div>
         </div>
     );

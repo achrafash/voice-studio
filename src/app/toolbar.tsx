@@ -7,7 +7,7 @@ interface ToolbarProps {
 
 export default function Toolbar(props: ToolbarProps) {
     return (
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-2 py-4">
             <button
                 id="highlight"
                 className="rounded border bg-gray-50 p-1 text-xs"
@@ -19,7 +19,7 @@ export default function Toolbar(props: ToolbarProps) {
             </button>
             <a
                 id="export"
-                className="rounded border bg-gray-50 text-xs"
+                className="rounded border bg-gray-50 p-1 text-xs"
                 type="button"
                 download="groundTruth-transcript.json"
                 href={`data:text/json;charset=utf-8,${encodeURIComponent(

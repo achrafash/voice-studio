@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useWavesurfer } from "@wavesurfer/react";
 import RegionsPlugin from "wavesurfer.js/dist/plugins/regions.esm.js";
+import CursorPlugin from "wavesurfer.js/dist/plugins/hover.esm.js";
+import TimelinePlugin from "wavesurfer.js/dist/plugins/timeline.esm.js";
+import MinimapPlugin from "wavesurfer.js/dist/plugins/minimap.esm.js";
 import Toolbar from "./toolbar";
 import Controls from "./controls";
 
@@ -44,13 +47,29 @@ export default function Editor(props: EditorProps) {
         interact: true,
         normalize: true,
         barGap: 1,
-        height: 60,
+        height: 120,
         barHeight: 20,
         autoCenter: true,
         autoScroll: true,
         cursorColor: "#c2410c",
+        minPxPerSec: 10,
         plugins: useMemo(() => {
-            return [regionsPlugin];
+            return [
+                regionsPlugin,
+                new TimelinePlugin({
+                    insertPosition: "afterend",
+                }),
+                new MinimapPlugin({
+                    height: 20,
+                }), // takes same options as the wavesurfer
+                new CursorPlugin({
+                    lineColor: "#ff0000",
+                    lineWidth: 2,
+                    labelBackground: "#555",
+                    labelColor: "#fff",
+                    labelSize: "11px",
+                }),
+            ];
         }, []),
     });
 
@@ -111,39 +130,6 @@ export default function Editor(props: EditorProps) {
 
     return (
         <div className="mx-auto w-full max-w-xl p-8">
-            {wavesurfer && isReady && (
-                <Toolbar
-                    onHighlight={handleHighlight}
-                    onExport={() => ({
-                        ...transcript,
-                        blocks: transcript.blocks.sort(
-                            (a, b) => a.from - b.from,
-                        ),
-                    })}
-                />
-            )}
-
-            <div id="waveform" ref={waveRef} />
-
-            {wavesurfer && isReady && (
-                <Controls
-                    currentTime={currentTime}
-                    duration={wavesurfer.getDuration()}
-                    isPlaying={isPlaying}
-                    onChange={(kv) => {
-                        if (kv["playbackSpeed"]) {
-                            wavesurfer.setOptions({
-                                audioRate: kv["playbackSpeed"],
-                            });
-                        }
-                        if (kv["time"]) {
-                            wavesurfer.setTime(kv["time"]);
-                        }
-                    }}
-                    onPlayPause={() => wavesurfer.playPause()}
-                    onSkip={(step) => wavesurfer.skip(step)}
-                />
-            )}
             {activeBlockId && (
                 <div className="relative">
                     <textarea
@@ -177,6 +163,43 @@ export default function Editor(props: EditorProps) {
                         {activeBlockId}
                     </span>
                 </div>
+            )}
+
+            {wavesurfer && isReady && (
+                <Toolbar
+                    onHighlight={handleHighlight}
+                    onExport={() => ({
+                        ...transcript,
+                        blocks: transcript.blocks.sort(
+                            (a, b) => a.from - b.from,
+                        ),
+                    })}
+                />
+            )}
+
+            <div id="waveform" ref={waveRef} />
+
+            {wavesurfer && isReady && (
+                <Controls
+                    currentTime={currentTime}
+                    duration={wavesurfer.getDuration()}
+                    isPlaying={isPlaying}
+                    onChange={(kv) => {
+                        if (kv["playbackSpeed"]) {
+                            wavesurfer.setOptions({
+                                audioRate: kv["playbackSpeed"],
+                            });
+                        }
+                        if (kv["time"]) {
+                            wavesurfer.setTime(kv["time"]);
+                        }
+                        if (kv["zoom"]) {
+                            wavesurfer.zoom(kv["zoom"]);
+                        }
+                    }}
+                    onPlayPause={() => wavesurfer.playPause()}
+                    onSkip={(step) => wavesurfer.skip(step)}
+                />
             )}
             <pre className="w-full rounded border bg-gray-100 p-2 font-mono text-xs">
                 <code>{JSON.stringify(transcript, null, 2)}</code>

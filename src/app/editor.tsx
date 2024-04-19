@@ -6,6 +6,7 @@ import TimelinePlugin from "wavesurfer.js/dist/plugins/timeline.esm.js";
 import MinimapPlugin from "wavesurfer.js/dist/plugins/minimap.esm.js";
 import Toolbar from "./toolbar";
 import Controls from "./controls";
+import { Textarea } from "@/components/ui/textarea";
 
 interface EditorProps {
     track: {
@@ -129,10 +130,10 @@ export default function Editor(props: EditorProps) {
     }
 
     return (
-        <div className="mx-auto w-full max-w-xl p-8">
+        <div className="mx-auto w-full max-w-4xl p-8">
             {activeBlockId && (
                 <div className="relative">
-                    <textarea
+                    <Textarea
                         key={activeBlockId}
                         name="transcription"
                         rows={10}
@@ -201,6 +202,7 @@ export default function Editor(props: EditorProps) {
                     onSkip={(step) => wavesurfer.skip(step)}
                 />
             )}
+            {/* TODO: move this preview on the right side panel like Figma with multiple tabs */}
             <pre className="w-full rounded border bg-gray-100 p-2 font-mono text-xs">
                 <code>{JSON.stringify(transcript, null, 2)}</code>
             </pre>

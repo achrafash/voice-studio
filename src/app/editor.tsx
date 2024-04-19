@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useWavesurfer } from "@wavesurfer/react";
 import RegionsPlugin from "wavesurfer.js/dist/plugins/regions.esm.js";
+import CursorPlugin from "wavesurfer.js/dist/plugins/hover.esm.js";
+import TimelinePlugin from "wavesurfer.js/dist/plugins/timeline.esm.js";
+import MinimapPlugin from "wavesurfer.js/dist/plugins/minimap.esm.js";
 import Toolbar from "./toolbar";
 import Controls from "./controls";
 
@@ -44,14 +47,29 @@ export default function Editor(props: EditorProps) {
         interact: true,
         normalize: true,
         barGap: 1,
-        height: 60,
+        height: 120,
         barHeight: 20,
         autoCenter: true,
         autoScroll: true,
         cursorColor: "#c2410c",
         minPxPerSec: 10,
         plugins: useMemo(() => {
-            return [regionsPlugin];
+            return [
+                regionsPlugin,
+                new TimelinePlugin({
+                    insertPosition: "afterend",
+                }),
+                new MinimapPlugin({
+                    height: 20,
+                }), // takes same options as the wavesurfer
+                new CursorPlugin({
+                    lineColor: "#ff0000",
+                    lineWidth: 2,
+                    labelBackground: "#555",
+                    labelColor: "#fff",
+                    labelSize: "11px",
+                }),
+            ];
         }, []),
     });
 

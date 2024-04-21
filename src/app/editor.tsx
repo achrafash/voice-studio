@@ -4,11 +4,11 @@ import RegionsPlugin from "wavesurfer.js/dist/plugins/regions.esm.js";
 import CursorPlugin from "wavesurfer.js/dist/plugins/hover.esm.js";
 import TimelinePlugin from "wavesurfer.js/dist/plugins/timeline.esm.js";
 import MinimapPlugin from "wavesurfer.js/dist/plugins/minimap.esm.js";
-import Toolbar from "./toolbar";
 import Controls from "./controls";
-import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import Icons from "@/components/ui/icons";
 
 interface EditorProps {
     track: {
@@ -32,8 +32,6 @@ export default function Editor(props: EditorProps) {
         endTime: props.track.end,
         blocks: [] as Block[],
     });
-    const [isHighlighting, setIsHighlighting] = useState(false);
-    const [highlightStart, setHighlightStart] = useState<number>();
     const [activeBlockId, setActiveBlockId] = useState<string | undefined>(
         undefined,
     );
@@ -49,9 +47,11 @@ export default function Editor(props: EditorProps) {
         dragToSeek: true,
         interact: true,
         normalize: true,
-        barGap: 1,
+        barGap: 2,
+        barWidth: 2,
+        barRadius: 2,
+        // barHeight: 20,
         height: 120,
-        barHeight: 20,
         autoCenter: true,
         // autoScroll: true,
         cursorColor: "#c2410c",
@@ -61,17 +61,19 @@ export default function Editor(props: EditorProps) {
                 regionsPlugin,
                 new TimelinePlugin({
                     insertPosition: "afterend",
+                    // TODO: provide a container to put it where I want
                 }),
                 new MinimapPlugin({
                     height: 20,
+                    // TODO: provide a container to put it where I want
                 }), // takes same options as the wavesurfer
-                new CursorPlugin({
-                    lineColor: "#ff0000",
-                    lineWidth: 2,
-                    labelBackground: "#555",
-                    labelColor: "#fff",
-                    labelSize: "11px",
-                }),
+                // new CursorPlugin({
+                //     lineColor: "#ff0000",
+                //     lineWidth: 2,
+                //     labelBackground: "#555",
+                //     labelColor: "#fff",
+                //     labelSize: "11px",
+                // }),
             ];
         }, []),
     });
@@ -107,35 +109,11 @@ export default function Editor(props: EditorProps) {
         return () => regionsPlugin.unAll();
     }, [isReady, activeBlockId]);
 
-    function handleHighlight() {
-        if (isHighlighting && highlightStart) {
-            const newRegion = regionsPlugin.addRegion({
-                start: highlightStart,
-                end: currentTime,
-            });
-            setTranscript((prev) => ({
-                ...prev,
-                blocks: [
-                    ...prev.blocks,
-                    {
-                        id: newRegion.id,
-                        from: newRegion.start + prev.startTime,
-                        to: newRegion.end + prev.startTime,
-                        text: "",
-                    },
-                ].sort((a, b) => a.from - b.from),
-            }));
-        } else if (!isHighlighting) {
-            setHighlightStart(currentTime);
-        }
-        setIsHighlighting((prev) => !prev);
-    }
-
     return (
-        <div className="flex max-h-full items-stretch overflow-hidden">
-            <div className="flex max-h-full flex-grow flex-col overflow-hidden px-4">
-                <div className="mt-12 flex max-h-full flex-grow flex-col overflow-hidden rounded-xl border bg-white">
-                    <div className="max-h-full w-full flex-grow overflow-y-scroll p-8">
+        <div className="flex h-full items-stretch overflow-hidden">
+            <div className="flex h-full flex-grow flex-col overflow-hidden px-4">
+                <div className="mt-12 flex h-full flex-grow flex-col overflow-hidden rounded-xl border bg-white">
+                    <div className="h-full w-full flex-grow overflow-y-scroll p-8">
                         {transcript.blocks.map((currentBlock) => (
                             <div
                                 key={currentBlock.id}
@@ -172,15 +150,36 @@ export default function Editor(props: EditorProps) {
                         <div id="waveform" ref={waveRef} />
                     </div>
                     {wavesurfer && isReady && (
-                        <Toolbar
-                            onHighlight={handleHighlight}
-                            onExport={() => ({
-                                ...transcript,
-                                blocks: transcript.blocks.sort(
-                                    (a, b) => a.from - b.from,
-                                ),
-                            })}
-                        />
+                        <Button
+                            variant="outline"
+                            className="m-2 mx-auto rounded-full"
+                            onClick={() => {
+                                const newRegion = regionsPlugin.addRegion({
+                                    start: currentTime,
+                                    end: currentTime + 5,
+                                    resize: true,
+                                    drag: true,
+                                });
+                                setTranscript((prev) => ({
+                                    ...prev,
+                                    blocks: [
+                                        ...prev.blocks,
+                                        {
+                                            id: newRegion.id,
+                                            from:
+                                                newRegion.start +
+                                                prev.startTime,
+                                            to: newRegion.end + prev.startTime,
+                                            text: "",
+                                        },
+                                    ].sort((a, b) => a.from - b.from),
+                                }));
+                            }}
+                        >
+                            <Icons.PlusIcon width={16} />
+                            &nbsp;
+                            <span className="text-xs">Add Segment</span>
+                        </Button>
                     )}
                 </div>
 

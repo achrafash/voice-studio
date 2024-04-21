@@ -75,7 +75,7 @@ export default function App() {
             </header>
 
             {track && (
-                <div className="max-h-full flex-grow overflow-hidden border bg-slate-50">
+                <div className="h-full flex-grow overflow-hidden border bg-slate-50">
                     <Editor track={track} />
                 </div>
             )}

@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import Editor from "./editor";
+import { Button } from "@/components/ui/button";
+import Icons from "@/components/ui/icons";
 
 function parseFilename(fname: string) {
     // <start_ts>-<end_ts>-<source>.wav
@@ -32,28 +34,50 @@ export default function App() {
     }
 
     return (
-        <>
-            <form className="mx-auto flex max-w-xl flex-col items-end space-y-4 px-8 py-12">
-                <div className="flex w-full flex-col">
-                    <label
-                        className="mb-1 text-sm font-medium text-gray-400"
-                        htmlFor="audio_files"
+        <main className="flex h-screen flex-col">
+            <header className="absolute inset-x-0 top-0 mx-auto max-w-xs p-4">
+                <nav className="mx-auto flex w-max items-center space-x-1 rounded-md border bg-white/0 p-0.5 shadow-sm backdrop-blur-sm">
+                    <Button variant="ghost" size="icon" className="relative">
+                        <Icons.FolderOpen width={16} strokeWidth={2} />
+                        <input
+                            className="absolute inset-0 opacity-0"
+                            type="file"
+                            multiple
+                            name="audio_files"
+                            id="audio_files"
+                            accept=".wav"
+                            onChange={onUpload}
+                        />
+                    </Button>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => {
+                            // TODO: reset the transcript object
+                            // TODO: make sure to first open an alert box to confirm
+                            // TODO: trigger a toast once done
+                        }}
                     >
-                        Audio Files
-                    </label>
-                    <input
-                        type="file"
-                        multiple
-                        name="audio_files"
-                        id="audio_files"
-                        className="border p-2 text-sm"
-                        accept=".wav"
-                        onChange={onUpload}
-                    />
-                </div>
-            </form>
+                        <Icons.Eraser width={16} strokeWidth={2} />
+                    </Button>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => {
+                            // TODO: move the export logic here
+                            // this will require a global store to access the transcript object from here
+                        }}
+                    >
+                        <Icons.HardDriveDownload width={16} strokeWidth={2} />
+                    </Button>
+                </nav>
+            </header>
 
-            {track && <Editor track={track} />}
-        </>
+            {track && (
+                <div className="h-full flex-grow overflow-hidden border bg-slate-50">
+                    <Editor track={track} />
+                </div>
+            )}
+        </main>
     );
 }

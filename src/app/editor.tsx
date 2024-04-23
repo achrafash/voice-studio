@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useWavesurfer } from "@wavesurfer/react";
 import RegionsPlugin from "wavesurfer.js/dist/plugins/regions.esm.js";
-import CursorPlugin from "wavesurfer.js/dist/plugins/hover.esm.js";
 import TimelinePlugin from "wavesurfer.js/dist/plugins/timeline.esm.js";
 import MinimapPlugin from "wavesurfer.js/dist/plugins/minimap.esm.js";
 import Controls from "./controls";
@@ -67,13 +66,6 @@ export default function Editor(props: EditorProps) {
                     height: 20,
                     // TODO: provide a container to put it where I want
                 }), // takes same options as the wavesurfer
-                // new CursorPlugin({
-                //     lineColor: "#ff0000",
-                //     lineWidth: 2,
-                //     labelBackground: "#555",
-                //     labelColor: "#fff",
-                //     labelSize: "11px",
-                // }),
             ];
         }, []),
     });
@@ -122,7 +114,7 @@ export default function Editor(props: EditorProps) {
                                 {/* TODO: use react-textarea-autosize */}
                                 <textarea
                                     name="transcription"
-                                    // disabled={currentBlock.id !== activeBlockId}
+                                    disabled={currentBlock.id !== activeBlockId}
                                     autoFocus={
                                         currentBlock.id === activeBlockId
                                     }
@@ -176,7 +168,7 @@ export default function Editor(props: EditorProps) {
                                 }));
                             }}
                         >
-                            <Icons.PlusIcon width={16} />
+                            <Icons.Plus width={16} />
                             &nbsp;
                             <span className="text-xs">Add Segment</span>
                         </Button>

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import * as Icons from "@heroicons/react/24/solid";
+import Icons from "@/components/ui/icons";
 import {
     Select,
     SelectContent,
@@ -83,7 +83,7 @@ export default function Controls(props: ControlsProps) {
                     className="rounded-full"
                     onClick={() => props.onSkip(-skipStep)}
                 >
-                    <Icons.BackwardIcon width={16} />
+                    <Icons.SkipBack width={16} />
                 </Button>
                 <Button
                     variant="ghost"
@@ -92,9 +92,9 @@ export default function Controls(props: ControlsProps) {
                     onClick={() => props.onPlayPause()}
                 >
                     {props.isPlaying ? (
-                        <Icons.PauseIcon width={16} />
+                        <Icons.Pause width={16} />
                     ) : (
-                        <Icons.PlayIcon width={16} />
+                        <Icons.Play width={16} />
                     )}
                 </Button>
                 <Button
@@ -103,7 +103,7 @@ export default function Controls(props: ControlsProps) {
                     className="rounded-full"
                     onClick={() => props.onSkip(skipStep)}
                 >
-                    <Icons.ForwardIcon width={16} />
+                    <Icons.SkipForward width={16} />
                 </Button>
             </div>
 

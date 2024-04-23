@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Editor from "./editor";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import Icons from "@/components/ui/icons";
 
@@ -37,9 +36,9 @@ export default function App() {
     return (
         <main className="flex h-screen flex-col">
             <header className="absolute inset-x-0 top-0 mx-auto max-w-xs p-4">
-                <nav className="mx-auto flex w-max items-center space-x-1 rounded-md border bg-white p-0.5 shadow-sm">
+                <nav className="mx-auto flex w-max items-center space-x-1 rounded-md border bg-white/0 p-0.5 shadow-sm backdrop-blur-sm">
                     <Button variant="ghost" size="icon" className="relative">
-                        <Icons.FolderOpenIcon width={16} strokeWidth={2} />
+                        <Icons.FolderOpen width={16} strokeWidth={2} />
                         <input
                             className="absolute inset-0 opacity-0"
                             type="file"
@@ -59,7 +58,7 @@ export default function App() {
                             // TODO: trigger a toast once done
                         }}
                     >
-                        <Icons.TrashIcon width={16} strokeWidth={2} />
+                        <Icons.Eraser width={16} strokeWidth={2} />
                     </Button>
                     <Button
                         variant="ghost"
@@ -69,7 +68,7 @@ export default function App() {
                             // this will require a global store to access the transcript object from here
                         }}
                     >
-                        <Icons.ArrowDownCircleIcon width={16} strokeWidth={2} />
+                        <Icons.HardDriveDownload width={16} strokeWidth={2} />
                     </Button>
                 </nav>
             </header>

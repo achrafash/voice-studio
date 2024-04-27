@@ -1,5 +1,3 @@
-"use client";
-
 import { useMemo, useRef, useState } from "react";
 // Wavesurfer
 import { useWavesurfer } from "@wavesurfer/react";
@@ -7,7 +5,7 @@ import TimelinePlugin from "wavesurfer.js/dist/plugins/timeline.esm.js";
 import MinimapPlugin from "wavesurfer.js/dist/plugins/minimap.esm.js";
 import RegionsPlugin from "wavesurfer.js/dist/plugins/regions.esm.js";
 
-import { Button, Input, Label, Icons } from "@/components/ui/";
+import { Button, Input, Label, Icons } from "@/components";
 
 import Controls from "./controls";
 import Player from "./player";
@@ -67,7 +65,6 @@ export default function App() {
                     // TODO: provide a container to put it where I want
                 }),
                 new MinimapPlugin({
-                    height: 20,
                     cursorWidth: 0,
                     waveColor: "#cbd5e1",
                     overlayColor: "transparent",
@@ -93,18 +90,18 @@ export default function App() {
             blocks: [],
         });
 
+        const audioURL = URL.createObjectURL(files[0]);
         setTrack({
             start: Number(start),
             end: Number(end),
             source,
-            url: URL.createObjectURL(files[0]),
+            url: audioURL,
         });
     }
 
-    if (isReady && track && transcript) {
-        console.log({ wavesurfer, track, transcript });
+    if (track && transcript) {
         return (
-            <div className="h-full flex-grow overflow-hidden border bg-slate-50">
+            <div className="h-screen flex-grow overflow-hidden border bg-slate-50">
                 <div className="flex h-full items-stretch overflow-hidden">
                     <div className="flex h-full flex-grow flex-col overflow-hidden px-4">
                         <div className="mt-12 flex h-full flex-grow flex-col overflow-hidden rounded-xl border bg-white">
@@ -246,7 +243,9 @@ export default function App() {
                             name="audio_files"
                             id="audio_files"
                             accept=".wav"
-                            onChange={onUpload}
+                            onChange={(e) => {
+                                onUpload(e);
+                            }}
                         />
                     </Button>
                     <Button

@@ -1,14 +1,14 @@
 import { useState } from "react";
-import Icons from "@/components/ui/icons";
 import {
+    Icons,
+    Button,
+    Slider,
     Select,
     SelectContent,
     SelectItem,
     SelectTrigger,
     SelectValue,
-} from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
-import { Slider } from "@/components/ui/slider";
+} from "@/components";
 
 interface ControlsProps {
     playbackSpeed?: number; // TODO: allow predefined values only

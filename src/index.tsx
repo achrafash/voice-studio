@@ -3,12 +3,68 @@ import ReactDOM from "react-dom/client";
 import App from "./app";
 import "./globals.css";
 
+import {
+    DropdownMenu,
+    DropdownMenuTrigger,
+    DropdownMenuContent,
+    DropdownMenuSeparator,
+    DropdownMenuItem,
+    Button,
+} from "@/components";
+
 import VERSION from "./version";
 
-// export const metadata: Metadata = {
-//     title: "Quill Annote",
-//     description: "Label studio for ASR data labeling | by Quill",
-// };
+function InfoMenu() {
+    return (
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button
+                    variant="outline"
+                    size="icon"
+                    className="rounded-full text-sm"
+                >
+                    ?
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="text-xs">
+                <DropdownMenuItem asChild>
+                    <a
+                        href="http://achrafash.com/"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs"
+                    >
+                        What&apos;s new?
+                    </a>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                    <a
+                        href="http://achrafash.com"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs"
+                    >
+                        Keyboard shortcuts
+                    </a>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                    <a
+                        href="mailto:aitsidihammou.achraf@gmail.com?subject=Voice%20Studio%20Feedback"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs"
+                    >
+                        Feedback
+                    </a>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem disabled className="text-xs">
+                    Voice Studio {VERSION}
+                </DropdownMenuItem>
+            </DropdownMenuContent>
+        </DropdownMenu>
+    );
+}
 
 function Layout({
     children,
@@ -19,11 +75,7 @@ function Layout({
         <>
             {children}
             <div className="absolute bottom-0 right-0 m-4">
-                <div className="inline-flex w-min cursor-default rounded-full border border-slate-200 bg-slate-100/50 px-2.5 py-1 text-xs text-slate-400 backdrop-blur-lg">
-                    <span className="">v</span>
-                    &thinsp;
-                    <span className="slashed-zero tabular-nums">{VERSION}</span>
-                </div>
+                <InfoMenu />
             </div>
         </>
     );

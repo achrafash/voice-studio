@@ -29,7 +29,7 @@ function InfoMenu() {
             <DropdownMenuContent className="text-xs">
                 <DropdownMenuItem asChild>
                     <a
-                        href="http://achrafash.com/"
+                        href="https://achrafash.notion.site/Changelog-7322156f463448a5ae9412f04f23cf3c?pvs=4"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-xs"
@@ -39,7 +39,7 @@ function InfoMenu() {
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                     <a
-                        href="http://achrafash.com"
+                        href="https://achrafash.notion.site/Keyboard-Shortcuts-64662828aed04f5982bc3573f9570375?pvs=4"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-xs"

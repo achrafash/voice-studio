@@ -5,6 +5,7 @@ import TimelinePlugin from "wavesurfer.js/dist/plugins/timeline.esm.js";
 import MinimapPlugin from "wavesurfer.js/dist/plugins/minimap.esm.js";
 import RegionsPlugin from "wavesurfer.js/dist/plugins/regions.esm.js";
 
+import TextareaAutosize from "react-textarea-autosize";
 import { Button, Input, Label, Icons } from "@/components";
 
 import Controls from "./controls";
@@ -46,8 +47,8 @@ export default function App() {
         regionsPlugin.on("region-in", (region) => {
             setActiveBlockId(region.id);
         });
-        regionsPlugin.on("region-out", () => {
-            setActiveBlockId(undefined);
+        regionsPlugin.on("region-out", (region) => {
+            if (activeBlockId === region.id) setActiveBlockId(undefined);
         });
         regionsPlugin.on("region-updated", (region) => {
             setTranscript(
@@ -159,45 +160,40 @@ export default function App() {
                         <div className="mt-12 flex h-full flex-grow flex-col overflow-hidden rounded-xl border bg-white">
                             <div className="h-full w-full flex-grow overflow-y-scroll p-8">
                                 {transcript.blocks.map((currentBlock) => (
-                                    <div
+                                    <TextareaAutosize
                                         key={currentBlock.id}
-                                        className="mx-auto max-w-lg"
-                                    >
-                                        <textarea
-                                            name="transcription"
-                                            disabled={
-                                                currentBlock.id !==
-                                                activeBlockId
-                                            }
-                                            autoFocus={
-                                                currentBlock.id ===
-                                                activeBlockId
-                                            }
-                                            placeholder="Start transcribing"
-                                            defaultValue={currentBlock.text}
-                                            onChange={(e) => {
-                                                setTranscript(
-                                                    (prev) =>
-                                                        prev && {
-                                                            ...prev,
-                                                            blocks: prev.blocks.map(
-                                                                (block) =>
-                                                                    block.id !==
-                                                                    currentBlock.id
-                                                                        ? block
-                                                                        : {
-                                                                              ...currentBlock,
-                                                                              text: e
-                                                                                  .target
-                                                                                  .value,
-                                                                          },
-                                                            ),
-                                                        },
-                                                );
-                                            }}
-                                            className="w-full resize-none bg-white p-2 text-slate-900 focus:outline-none disabled:text-opacity-50"
-                                        />
-                                    </div>
+                                        minRows={1}
+                                        name="transcription"
+                                        disabled={
+                                            currentBlock.id !== activeBlockId
+                                        }
+                                        autoFocus={
+                                            currentBlock.id === activeBlockId
+                                        }
+                                        placeholder="Start transcribing"
+                                        defaultValue={currentBlock.text}
+                                        onChange={(e) => {
+                                            setTranscript(
+                                                (prev) =>
+                                                    prev && {
+                                                        ...prev,
+                                                        blocks: prev.blocks.map(
+                                                            (block) =>
+                                                                block.id !==
+                                                                currentBlock.id
+                                                                    ? block
+                                                                    : {
+                                                                          ...currentBlock,
+                                                                          text: e
+                                                                              .target
+                                                                              .value,
+                                                                      },
+                                                        ),
+                                                    },
+                                            );
+                                        }}
+                                        className="mx-auto flex w-full max-w-lg resize-none bg-white p-2 text-slate-900 focus:outline-none disabled:text-opacity-50"
+                                    />
                                 ))}
                             </div>
                             <Player ref={playerRef} />

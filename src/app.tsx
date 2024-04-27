@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 // Wavesurfer
 import { useWavesurfer } from "@wavesurfer/react";
 import TimelinePlugin from "wavesurfer.js/dist/plugins/timeline.esm.js";
@@ -43,11 +43,11 @@ export default function App() {
     const playerRef = useRef<HTMLDivElement>(null);
     const regionsPlugin = useMemo(() => {
         const regionsPlugin = new RegionsPlugin();
-
-        // TODO: load regions from blocks
-
         regionsPlugin.on("region-in", (region) => {
             setActiveBlockId(region.id);
+        });
+        regionsPlugin.on("region-out", () => {
+            setActiveBlockId(undefined);
         });
         regionsPlugin.on("region-updated", (region) => {
             setTranscript(
@@ -60,8 +60,8 @@ export default function App() {
 
                                 return {
                                     ...block,
-                                    from: region.start,
-                                    to: region.end,
+                                    from: region.start + transcript!.startTime,
+                                    to: region.end + transcript!.startTime,
                                 };
                             })
                             .sort((a, b) => a.from - b.from),
@@ -106,6 +106,28 @@ export default function App() {
             ];
         }, []),
     });
+
+    // Registering wavesurfer events
+    useEffect(() => {
+        if (!wavesurfer) return;
+
+        const unsubscribe = wavesurfer.on("ready", () => {
+            if (transcript?.blocks) {
+                transcript.blocks.forEach((block) => {
+                    regionsPlugin.addRegion({
+                        id: block.id,
+                        start: block.from - transcript.startTime,
+                        end: block.to - transcript.startTime,
+                    });
+                    console.log(`created region #${block.id}`);
+                });
+            }
+        });
+
+        return () => {
+            unsubscribe();
+        };
+    }, [wavesurfer]);
 
     async function onUpload(e: React.ChangeEvent<HTMLInputElement>) {
         const files = e.target.files;
@@ -248,20 +270,60 @@ export default function App() {
                             }}
                         />
                     </div>
+
+                    {/* Label Panel */}
                     <nav className="flex w-[calc(min(20rem,30vw))] flex-shrink-0 flex-col border bg-white">
-                        <div className="px-4 py-2">
-                            <span>Labels</span>
+                        <div className="flex-1">
+                            {activeBlockId ? (
+                                <>
+                                    <div className="px-4 py-2">
+                                        <span className="text-sm font-medium">
+                                            Labels
+                                        </span>
+                                    </div>
+                                    <div className="px-4 py-2">
+                                        <Label htmlFor="" className="text-xs">
+                                            Selection
+                                        </Label>
+                                        <div className="flex">
+                                            <Input type="text" />
+                                            <Input type="text" />
+                                        </div>
+                                    </div>
+                                    <div className="px-4 py-2">
+                                        <Label htmlFor="">Speaker</Label>
+                                        <Input type="text" />
+                                    </div>
+                                </>
+                            ) : (
+                                <div className="p-4">
+                                    <span className="text-sm font-medium">
+                                        Segments
+                                    </span>
+                                    <div className="divide-y rounded-md border">
+                                        {transcript.blocks.map((block) => (
+                                            <div
+                                                key={block.id}
+                                                className="grid grid-cols-2 divide-x px-2"
+                                            >
+                                                <span className="py-2 text-center text-xs">
+                                                    {block.from}
+                                                </span>
+                                                <span className="py-2 text-center text-xs">
+                                                    {block.to}
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                         </div>
-                        <div className="px-4 py-2">
-                            <Label htmlFor="">Selection</Label>
-                            <div className="flex">
-                                <Input type="text" />
-                                <Input type="text" />
-                            </div>
-                        </div>
-                        <div className="px-4 py-2">
-                            <Label htmlFor="">Speaker</Label>
-                            <Input type="text" />
+                        <div className="h-full overflow-hidden p-4">
+                            <pre className="h-full overflow-auto rounded-lg bg-slate-800 px-4 py-2">
+                                <code className="font-mono text-xs text-slate-100">
+                                    {JSON.stringify(transcript, null, 2)}
+                                </code>
+                            </pre>
                         </div>
                     </nav>
                 </div>

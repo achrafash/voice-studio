@@ -35,7 +35,7 @@ export default function App() {
     const [track, setTrack] = useState<{
         start: number;
         end: number;
-        source: string;
+        source: Block["source"];
         url: string;
     }>();
     const [activeBlockId, setActiveBlockId] = useState<string>();
@@ -94,7 +94,7 @@ export default function App() {
         setTrack({
             start: Number(start),
             end: Number(end),
-            source,
+            source: source as Block["source"],
             url: audioURL,
         });
     }
@@ -152,28 +152,41 @@ export default function App() {
                             <Player ref={playerRef} />
 
                             <Button
+                                title="Add Segment"
                                 variant="outline"
                                 className="m-2 mx-auto rounded-full"
                                 onClick={() => {
                                     // TODO: get these values from the global store
-                                    // const newRegion = regionsPlugin.addRegion({
-                                    //     start: currentTime,
-                                    //     end: currentTime + 5,
-                                    //     resize: true,
-                                    //     drag: true,
-                                    // });
-                                    // setTranscript((prev) => ({
-                                    //     ...prev,
-                                    //     blocks: [
-                                    //         ...prev.blocks,
-                                    //         {
-                                    //             id: newRegion.id,
-                                    //             from: newRegion.start + prev.startTime,
-                                    //             to: newRegion.end + prev.startTime,
-                                    //             text: "",
-                                    //         },
-                                    //     ].sort((a, b) => a.from - b.from),
-                                    // }));
+                                    const newRegion = regionsPlugin.addRegion({
+                                        start: currentTime,
+                                        end: currentTime + 5,
+                                        resize: true,
+                                        drag: true,
+                                    });
+                                    setTranscript(
+                                        (prev) =>
+                                            prev && {
+                                                ...prev,
+                                                blocks: [
+                                                    ...prev.blocks,
+                                                    {
+                                                        id: newRegion.id,
+                                                        from:
+                                                            newRegion.start +
+                                                            prev.startTime,
+                                                        to:
+                                                            newRegion.end +
+                                                            prev.startTime,
+                                                        text: "",
+                                                        source:
+                                                            track?.source ??
+                                                            "system",
+                                                    },
+                                                ].sort(
+                                                    (a, b) => a.from - b.from,
+                                                ),
+                                            },
+                                    );
                                 }}
                             >
                                 <Icons.Plus width={16} />
@@ -187,24 +200,23 @@ export default function App() {
                             duration={wavesurfer?.getDuration() || 0}
                             isPlaying={isPlaying}
                             onChange={(kv) => {
-                                // TODO: dispatch actions from controls to the Player
-                                // if (kv["playbackSpeed"]) {
-                                //     wavesurfer.setOptions({
-                                //         audioRate: kv["playbackSpeed"],
-                                //     });
-                                // }
-                                // if (kv["time"]) {
-                                //     wavesurfer.setTime(kv["time"]);
-                                // }
-                                // if (kv["zoom"]) {
-                                //     wavesurfer.zoom(kv["zoom"]);
-                                // }
+                                if (kv["playbackSpeed"]) {
+                                    wavesurfer?.setOptions({
+                                        audioRate: kv["playbackSpeed"],
+                                    });
+                                }
+                                if (kv["time"]) {
+                                    wavesurfer?.setTime(kv["time"]);
+                                }
+                                if (kv["zoom"]) {
+                                    wavesurfer?.zoom(kv["zoom"]);
+                                }
                             }}
                             onPlayPause={() => {
-                                // wavesurfer.playPause()
+                                wavesurfer?.playPause();
                             }}
                             onSkip={(step) => {
-                                // wavesurfer.skip(step)
+                                wavesurfer?.skip(step);
                             }}
                         />
                     </div>

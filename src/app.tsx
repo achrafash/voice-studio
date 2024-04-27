@@ -60,8 +60,8 @@ export default function App() {
 
                                 return {
                                     ...block,
-                                    from: region.start + transcript!.startTime,
-                                    to: region.end + transcript!.startTime,
+                                    from: region.start + prev.startTime,
+                                    to: region.end + prev.startTime,
                                 };
                             })
                             .sort((a, b) => a.from - b.from),

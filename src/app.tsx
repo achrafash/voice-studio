@@ -41,8 +41,38 @@ export default function App() {
     const [activeBlockId, setActiveBlockId] = useState<string>();
 
     const playerRef = useRef<HTMLDivElement>(null);
-    const regionsPlugin = useMemo(() => new RegionsPlugin(), []);
-    const { wavesurfer, isPlaying, currentTime, isReady } = useWavesurfer({
+    const regionsPlugin = useMemo(() => {
+        const regionsPlugin = new RegionsPlugin();
+
+        // TODO: load regions from blocks
+
+        regionsPlugin.on("region-in", (region) => {
+            setActiveBlockId(region.id);
+        });
+        regionsPlugin.on("region-updated", (region) => {
+            setTranscript(
+                (prev) =>
+                    prev && {
+                        ...prev,
+                        blocks: prev.blocks
+                            .map((block) => {
+                                if (block.id !== region.id) return block;
+
+                                return {
+                                    ...block,
+                                    from: region.start,
+                                    to: region.end,
+                                };
+                            })
+                            .sort((a, b) => a.from - b.from),
+                    },
+            );
+        });
+
+        return regionsPlugin;
+    }, []);
+
+    const { wavesurfer, isPlaying, currentTime } = useWavesurfer({
         url: track?.url,
         container: playerRef,
         waveColor: "#9ca3af",
@@ -111,7 +141,6 @@ export default function App() {
                                         key={currentBlock.id}
                                         className="mx-auto max-w-lg"
                                     >
-                                        {/* TODO: use react-textarea-autosize */}
                                         <textarea
                                             name="transcription"
                                             disabled={
@@ -156,7 +185,6 @@ export default function App() {
                                 variant="outline"
                                 className="m-2 mx-auto rounded-full"
                                 onClick={() => {
-                                    // TODO: get these values from the global store
                                     const newRegion = regionsPlugin.addRegion({
                                         start: currentTime,
                                         end: currentTime + 5,
@@ -184,7 +212,7 @@ export default function App() {
                                                     },
                                                 ].sort(
                                                     (a, b) => a.from - b.from,
-                                                ),
+                                                ), // FIXME: fails to properly sort the blocks
                                             },
                                     );
                                 }}

@@ -4,7 +4,6 @@ interface PlayerProps {}
 
 export default forwardRef<HTMLDivElement, PlayerProps>(
     function Player(props, ref) {
-        console.log(props, ref);
         return (
             <div className="border-b border-t p-4">
                 <div id="waveform" ref={ref} />

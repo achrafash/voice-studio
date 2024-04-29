@@ -230,7 +230,7 @@ export default function App() {
                                         autoFocus={
                                             currentBlock.id === activeBlockId
                                         }
-                                        placeholder="Start transcribing"
+                                        placeholder="…"
                                         defaultValue={currentBlock.text}
                                         onChange={(e) => {
                                             setTranscript(
@@ -267,12 +267,14 @@ export default function App() {
                                 title="Add Segment"
                                 variant="outline"
                                 onClick={() => {
+                                    // Add a new region in the player
                                     const newRegion = regionsPlugin.addRegion({
                                         start: currentTime,
                                         end: currentTime + 5,
                                         resize: true,
                                         drag: true,
                                     });
+                                    // Add a new block in the transcript
                                     setTranscript(
                                         (prev) =>
                                             prev && {
@@ -281,20 +283,18 @@ export default function App() {
                                                     ...prev.blocks,
                                                     {
                                                         id: newRegion.id,
-                                                        from:
-                                                            newRegion.start +
-                                                            prev.startTime,
-                                                        to:
-                                                            newRegion.end +
-                                                            prev.startTime,
+                                                        // TODO: use ms timestamps
+                                                        from: newRegion.start,
+                                                        to: newRegion.end,
                                                         text: "",
                                                         source: "system" as const,
                                                     },
                                                 ].sort(
                                                     (a, b) => a.from - b.from,
-                                                ), // FIXME: fails to properly sort the blocks
+                                                ),
                                             },
                                     );
+                                    setActiveBlockId(newRegion.id);
                                 }}
                                 className="rounded-full"
                             >

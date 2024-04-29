@@ -1,5 +1,5 @@
 export type Block = {
-    id?: string;
+    id: string;
     from: number;
     to: number;
     text: string;

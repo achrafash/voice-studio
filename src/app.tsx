@@ -181,7 +181,23 @@ export default function App() {
                         <span>Untitled</span>
                     </div>
                     <div className="flex justify-end px-4 py-2">
-                        <button className="flex cursor-default items-center space-x-1.5 rounded-md bg-indigo-600 py-1.5 pl-2 pr-3 text-xs font-medium text-white">
+                        <button
+                            onClick={() => {
+                                const blob = new Blob(
+                                    [JSON.stringify(transcript, null, 4)],
+                                    { type: "application/json" },
+                                );
+                                const url = URL.createObjectURL(blob);
+                                const a = document.createElement("a");
+                                a.href = url;
+                                a.download = "groundTruth-transcript.json";
+                                document.body.appendChild(a);
+                                a.click();
+                                document.body.removeChild(a);
+                                URL.revokeObjectURL(url);
+                            }}
+                            className="flex cursor-default items-center space-x-1.5 rounded-md bg-indigo-600 py-1.5 pl-2 pr-3 text-xs font-medium text-white"
+                        >
                             <Icons.FileJson2
                                 size={14}
                                 strokeWidth={2}

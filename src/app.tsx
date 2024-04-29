@@ -11,7 +11,7 @@ import { Button, Input, Label, Icons } from "@/components";
 import Controls from "./controls";
 import Player from "./player";
 
-export type Block = {
+type Block = {
     id?: string;
     from: number;
     to: number;
@@ -19,26 +19,21 @@ export type Block = {
     source: "mic" | "system";
     speaker_id?: number;
 };
-export interface Transcript {
+interface Transcript {
     startTime: number;
     endTime: number;
     blocks: Block[];
 }
-
-function parseFilename(fname: string) {
-    // <start_ts>-<end_ts>-<source>.wav
-    const [start, end, source] = fname.replace(".wav", "").split("-");
-    return { start, end, source };
+interface Track {
+    name: string;
+    audio: string;
+    duration: number;
+    offset: number;
 }
 
 export default function App() {
     const [transcript, setTranscript] = useState<Transcript>();
-    const [track, setTrack] = useState<{
-        start: number;
-        end: number;
-        source: Block["source"];
-        url: string;
-    }>();
+    const [track, setTrack] = useState<Track>();
     const [activeBlockId, setActiveBlockId] = useState<string>();
 
     const playerRef = useRef<HTMLDivElement>(null);
@@ -61,8 +56,8 @@ export default function App() {
 
                                 return {
                                     ...block,
-                                    from: region.start + prev.startTime,
-                                    to: region.end + prev.startTime,
+                                    from: region.start,
+                                    to: region.end,
                                 };
                             })
                             .sort((a, b) => a.from - b.from),
@@ -74,7 +69,7 @@ export default function App() {
     }, []);
 
     const { wavesurfer, isPlaying, currentTime } = useWavesurfer({
-        url: track?.url,
+        url: track?.audio,
         container: playerRef,
         waveColor: "#9ca3af",
         progressColor: "#fb923c",
@@ -133,22 +128,33 @@ export default function App() {
     async function onUpload(e: React.ChangeEvent<HTMLInputElement>) {
         const files = e.target.files;
         if (!files || files.length === 0) return;
-
-        const { start, end, source } = parseFilename(files[0].name);
+        const file = files[0];
+        // Compute duration
+        const audioContext = new window.AudioContext();
+        const arrayBuffer = await file.arrayBuffer();
+        const duration = await new Promise<number>((resolve) =>
+            audioContext.decodeAudioData(arrayBuffer, (buffer) => {
+                resolve(buffer.duration);
+            }),
+        );
 
         // Initialize transcript
-        setTranscript({
-            startTime: Number(start),
-            endTime: Number(end),
+        setTranscript((prev) => ({
+            startTime: 0,
+            // TODO: use ms timestamps for transcript
+            endTime:
+                prev?.endTime && prev.endTime > duration
+                    ? prev.endTime
+                    : duration,
             blocks: [],
-        });
+        }));
 
-        const audioURL = URL.createObjectURL(files[0]);
+        const audioURL = URL.createObjectURL(file);
         setTrack({
-            start: Number(start),
-            end: Number(end),
-            source: source as Block["source"],
-            url: audioURL,
+            name: file.name,
+            duration,
+            audio: audioURL,
+            offset: 0,
         });
     }
 

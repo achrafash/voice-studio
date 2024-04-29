@@ -160,12 +160,55 @@ export default function App() {
 
     if (track && transcript) {
         return (
-            <div className="h-screen flex-grow overflow-hidden border bg-slate-50">
-                <div className="flex h-full items-stretch overflow-hidden">
-                    <div className="flex h-full flex-grow flex-col overflow-hidden px-4">
-                        <div className="mt-12 flex h-full flex-grow flex-col overflow-hidden rounded-xl border bg-white">
-                            <div className="h-full w-full flex-grow overflow-y-scroll p-8">
-                                {transcript.blocks.map((currentBlock) => (
+            <div className="flex h-screen flex-col overflow-hidden bg-slate-50">
+                <header className="grid grid-cols-3 border-b bg-white">
+                    <div className="">
+                        <button className="relative h-full cursor-default p-3 hover:bg-slate-100">
+                            <Icons.FileAudio2
+                                size={18}
+                                className="text-slate-700"
+                            />
+                            <input
+                                className="absolute inset-0 opacity-0"
+                                type="file"
+                                name="audio_files"
+                                id="audio_files"
+                                accept=".wav"
+                                onChange={(e) => {
+                                    onUpload(e);
+                                }}
+                            />
+                        </button>
+                    </div>
+                    <div className="flex items-center justify-center space-x-1 p-2 text-xs">
+                        <span className="text-slate-500">Drafts</span>
+                        <span className="text-slate-500">/</span>
+                        <span>Untitled</span>
+                    </div>
+                    <div className="flex justify-end px-4 py-2">
+                        <button className="flex cursor-default items-center space-x-1.5 rounded-md bg-indigo-600 py-1.5 pl-2 pr-3 text-xs font-medium text-white">
+                            <Icons.FileJson2
+                                size={14}
+                                strokeWidth={2}
+                                className="text-indigo-50"
+                            />
+                            <span>Export</span>
+                        </button>
+                    </div>
+                </header>
+                <div className="flex h-full flex-1 items-stretch overflow-hidden">
+                    {/* Main Area */}
+                    <div className="flex h-full flex-grow flex-col divide-y overflow-hidden">
+                        {/* Transcription Area */}
+                        <div className="mx-auto h-full w-full max-w-2xl flex-1 space-y-0.5 divide-y divide-slate-50 overflow-y-scroll border-x bg-white py-8">
+                            {transcript.blocks.map((currentBlock) => (
+                                <div
+                                    key={currentBlock.id}
+                                    className="relative px-8 outline -outline-offset-1 outline-transparent hover:outline-indigo-500"
+                                >
+                                    {/* <div className="absolute right-0 top-0 m-2 rounded border bg-slate-100 px-2 py-0.5 text-xs">
+                                        speaker #0
+                                    </div> */}
                                     <TextareaAutosize
                                         key={currentBlock.id}
                                         minRows={1}
@@ -198,16 +241,20 @@ export default function App() {
                                                     },
                                             );
                                         }}
-                                        className="mx-auto flex w-full max-w-lg resize-none bg-white p-2 text-slate-900 focus:outline-none disabled:text-opacity-50"
+                                        className="mx-auto flex w-full max-w-xl resize-none bg-white py-4 text-sm text-slate-900 focus:outline-none disabled:text-opacity-50"
                                     />
-                                ))}
-                            </div>
-                            <Player ref={playerRef} />
+                                </div>
+                            ))}
+                        </div>
 
+                        {/* Track Players */}
+                        <Player ref={playerRef} />
+
+                        {/* Tools */}
+                        <div className="flex justify-center bg-white p-2">
                             <Button
                                 title="Add Segment"
                                 variant="outline"
-                                className="m-2 mx-auto rounded-full"
                                 onClick={() => {
                                     const newRegion = regionsPlugin.addRegion({
                                         start: currentTime,
@@ -230,9 +277,7 @@ export default function App() {
                                                             newRegion.end +
                                                             prev.startTime,
                                                         text: "",
-                                                        source:
-                                                            track?.source ??
-                                                            "system",
+                                                        source: "system" as const,
                                                     },
                                                 ].sort(
                                                     (a, b) => a.from - b.from,
@@ -240,6 +285,7 @@ export default function App() {
                                             },
                                     );
                                 }}
+                                className="rounded-full"
                             >
                                 <Icons.Plus width={16} />
                                 &nbsp;
@@ -247,6 +293,7 @@ export default function App() {
                             </Button>
                         </div>
 
+                        {/* Controls */}
                         <Controls
                             currentTime={currentTime}
                             duration={wavesurfer?.getDuration() || 0}
@@ -320,13 +367,14 @@ export default function App() {
                                 </div>
                             )}
                         </div>
-                        <div className="h-full overflow-hidden p-4">
-                            <pre className="h-full overflow-auto rounded-lg bg-slate-800 px-4 py-2">
-                                <code className="font-mono text-xs text-slate-100">
+                        {/* Display JSON transcript for debugging */}
+                        {/* <div className="flex-shrink overflow-hidden p-4">
+                            <pre className="max-h-full overflow-auto whitespace-pre-wrap rounded bg-indigo-950 px-4 py-2">
+                                <code className="font-mono text-xs text-indigo-50">
                                     {JSON.stringify(transcript, null, 2)}
                                 </code>
                             </pre>
-                        </div>
+                        </div> */}
                     </nav>
                 </div>
             </div>
@@ -343,7 +391,6 @@ export default function App() {
                         <input
                             className="absolute inset-0 opacity-0"
                             type="file"
-                            multiple
                             name="audio_files"
                             id="audio_files"
                             accept=".wav"

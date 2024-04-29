@@ -6,7 +6,7 @@ import MinimapPlugin from "wavesurfer.js/dist/plugins/minimap.esm.js";
 import RegionsPlugin from "wavesurfer.js/dist/plugins/regions.esm.js";
 
 import TextareaAutosize from "react-textarea-autosize";
-import { Button, Input, Label, Icons } from "@/components";
+import { Button, Icons } from "@/components";
 
 import Controls from "./controls";
 import Player from "./player";
@@ -405,8 +405,9 @@ export default function App() {
                                                             },
                                                         );
                                                     } else {
-                                                        blockRegion.start =
-                                                            value;
+                                                        blockRegion.setOptions({
+                                                            start: value,
+                                                        });
                                                     }
                                                 }}
                                             />
@@ -471,8 +472,10 @@ export default function App() {
                                                             },
                                                         );
                                                     } else {
-                                                        blockRegion.start =
-                                                            value;
+                                                        blockRegion.setOptions({
+                                                            ...blockRegion,
+                                                            end: value,
+                                                        });
                                                     }
                                                 }}
                                             />

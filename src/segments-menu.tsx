@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Block } from "./types";
 import { Region } from "wavesurfer.js/dist/plugins/regions.esm.js";
 import { Icons } from "./components";
@@ -9,6 +10,9 @@ interface SegmentsMenuProps {
 }
 
 export default function SegmentsMenu(props: SegmentsMenuProps) {
+    const [isRegionLocked, setIsRegionLocked] = useState(
+        !(props.region?.resize || props.region?.drag),
+    );
     return (
         <nav className="flex w-[calc(min(15rem,25vw))] flex-shrink-0 flex-col divide-y border-l bg-white">
             <div className="flex items-center space-x-2 px-4 py-2">
@@ -72,11 +76,37 @@ export default function SegmentsMenu(props: SegmentsMenuProps) {
                                 </div>
                             </div>
                         </div>
-                        <button className="group rounded p-2 hover:bg-slate-100">
-                            <Icons.LockIcon
-                                size={16}
-                                className="text-slate-300 group-hover:text-slate-500"
-                            />
+                        <button
+                            onClick={() => {
+                                if (isRegionLocked) {
+                                    props.region?.setOptions({
+                                        ...props.region,
+                                        resize: true,
+                                        drag: true,
+                                    });
+                                }
+                                if (!isRegionLocked) {
+                                    props.region?.setOptions({
+                                        ...props.region,
+                                        resize: false,
+                                        drag: false,
+                                    });
+                                }
+                                setIsRegionLocked((prev) => !prev);
+                            }}
+                            className="group rounded p-2 hover:bg-slate-100"
+                        >
+                            {isRegionLocked ? (
+                                <Icons.UnlockIcon
+                                    size={16}
+                                    className="text-slate-300 group-hover:text-slate-500"
+                                />
+                            ) : (
+                                <Icons.LockIcon
+                                    size={16}
+                                    className="text-slate-300 group-hover:text-slate-500"
+                                />
+                            )}
                         </button>
                     </div>
                 )}

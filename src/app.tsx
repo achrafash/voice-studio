@@ -283,6 +283,23 @@ export default function App() {
                                                 try {
                                                     const data =
                                                         JSON.parse(content);
+
+                                                    // Convert timestamps ms -> sec
+                                                    data.startTime /= 1_000;
+                                                    data.endTime /= 1_000;
+                                                    data.blocks =
+                                                        data.blocks.map(
+                                                            (block: Block) => ({
+                                                                ...block,
+                                                                from:
+                                                                    block.from /
+                                                                    1_000,
+                                                                to:
+                                                                    block.to /
+                                                                    1_000,
+                                                            }),
+                                                        );
+
                                                     setTranscript(data);
                                                     data.blocks.map(
                                                         (block: Block) => {

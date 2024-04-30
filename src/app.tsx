@@ -6,7 +6,7 @@ import MinimapPlugin from "wavesurfer.js/dist/plugins/minimap.esm.js";
 import RegionsPlugin from "wavesurfer.js/dist/plugins/regions.esm.js";
 
 import TextareaAutosize from "react-textarea-autosize";
-import { Button, Icons } from "@/components";
+import { Button, Icons, Input, Label } from "@/components";
 
 import Controls from "./controls";
 import Player from "./player";
@@ -211,7 +211,59 @@ export default function App() {
                     {/* Main Area */}
                     <div className="flex h-full flex-grow flex-col divide-y overflow-hidden">
                         {/* Transcription Area */}
-                        <div className="mx-auto h-full w-full max-w-2xl flex-1 space-y-0.5 divide-y divide-slate-50 overflow-y-scroll border-x bg-white py-8">
+                        <div className="relative mx-auto h-full w-full max-w-2xl flex-1 space-y-0.5 divide-y divide-slate-50 overflow-y-scroll border-x bg-white py-8">
+                            {transcript?.blocks?.length === 0 && (
+                                <div className="absolute inset-0 mx-auto flex w-max flex-col justify-center space-y-2 text-sm">
+                                    <Label htmlFor="transcript">
+                                        Already have a transcript? Start from
+                                        there!
+                                    </Label>
+                                    <Input
+                                        type="file"
+                                        accept="json"
+                                        name="transcript"
+                                        id="transcript"
+                                        className="text-sm"
+                                        onChange={(e) => {
+                                            if (
+                                                !e.target.files ||
+                                                e.target.files.length === 0
+                                            )
+                                                return;
+                                            const file = e.target.files[0];
+                                            if (
+                                                file.type !== "application/json"
+                                            )
+                                                return;
+                                            const reader = new FileReader();
+                                            reader.onload = (event) => {
+                                                const content = event.target
+                                                    ?.result as string;
+                                                try {
+                                                    const data =
+                                                        JSON.parse(content);
+                                                    setTranscript(data);
+                                                    data.blocks.map(
+                                                        (block: Block) => {
+                                                            regionsPlugin.addRegion(
+                                                                {
+                                                                    id: block.id,
+                                                                    start: block.from,
+                                                                    end: block.to,
+                                                                },
+                                                            );
+                                                        },
+                                                    );
+                                                } catch (error) {
+                                                    console.error(error);
+                                                }
+                                            };
+                                            reader.readAsText(file);
+                                        }}
+                                    />
+                                </div>
+                            )}
+
                             {transcript.blocks.map((currentBlock) => (
                                 <div
                                     key={currentBlock.id}

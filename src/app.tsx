@@ -354,6 +354,23 @@ export default function App() {
                                     },
                             );
                         }}
+                        onBlockDelete={(blockId) => {
+                            // Remove block from transcript
+                            setTranscript(
+                                (prev) =>
+                                    prev && {
+                                        ...prev,
+                                        blocks: prev.blocks.filter(
+                                            (block) => block.id !== blockId,
+                                        ),
+                                    },
+                            );
+                            // Remove region from player
+                            regionsPlugin
+                                .getRegions()
+                                .find((r) => r.id === blockId)
+                                ?.remove();
+                        }}
                     />
                 </div>
             </div>

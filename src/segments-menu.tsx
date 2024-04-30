@@ -5,6 +5,7 @@ import { Icons } from "./components";
 interface SegmentsMenuProps {
     blocks: (Block & { region?: Region })[];
     onBlockChange(block: Block): void;
+    onBlockDelete(id: string): void;
 }
 
 export default function SegmentsMenu(props: SegmentsMenuProps) {
@@ -103,16 +104,27 @@ export default function SegmentsMenu(props: SegmentsMenuProps) {
                                 className="group rounded p-2 hover:bg-slate-100"
                             >
                                 {block.isLocked ? (
-                                    <Icons.UnlockIcon
+                                    <Icons.Unlock
                                         size={16}
                                         className="text-slate-300 group-hover:text-slate-500"
                                     />
                                 ) : (
-                                    <Icons.LockIcon
+                                    <Icons.Lock
                                         size={16}
                                         className="text-slate-300 group-hover:text-slate-500"
                                     />
                                 )}
+                            </button>
+                            <button
+                                onClick={() => {
+                                    props.onBlockDelete(block.id);
+                                }}
+                                className="group rounded p-2 hover:bg-slate-100"
+                            >
+                                <Icons.Trash
+                                    size={16}
+                                    className="text-slate-300 group-hover:text-slate-500"
+                                />
                             </button>
                         </div>
                     </div>

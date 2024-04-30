@@ -32,9 +32,10 @@ export default function Controls(props: ControlsProps) {
     return (
         <div
             id="controls"
-            className="grid w-full grid-cols-3 gap-4 py-4 font-mono text-sm"
+            className="grid w-full grid-cols-3 gap-4 p-4 font-mono text-sm"
         >
             <div className="flex items-center justify-between space-x-2">
+                {/* TODO: change to a dropdown menu */}
                 <Select
                     name="playback-speed"
                     defaultValue={playbackSpeed.toString()}
@@ -45,8 +46,8 @@ export default function Controls(props: ControlsProps) {
                     }}
                 >
                     <SelectTrigger className="w-max rounded-full text-xs">
-                        <span>speed</span>&nbsp;
                         <SelectValue placeholder="playback speed" />
+                        <span>x</span>
                     </SelectTrigger>
                     <SelectContent className="text-xs">
                         <SelectItem value={"0.3"}>0.3</SelectItem>

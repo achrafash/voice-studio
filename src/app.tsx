@@ -6,39 +6,29 @@ import MinimapPlugin from "wavesurfer.js/dist/plugins/minimap.esm.js";
 import RegionsPlugin from "wavesurfer.js/dist/plugins/regions.esm.js";
 
 import TextareaAutosize from "react-textarea-autosize";
-import { Button, Input, Label, Icons } from "@/components";
+import { Button, Icons } from "@/components";
 
 import Controls from "./controls";
 import Player from "./player";
+import SegmentsMenu from "./segments-menu";
 
-export type Block = {
-    id?: string;
-    from: number;
-    to: number;
-    text: string;
-    source: "mic" | "system";
-    speaker_id?: number;
-};
-export interface Transcript {
+import { Block } from "./types";
+
+interface Transcript {
     startTime: number;
     endTime: number;
     blocks: Block[];
 }
-
-function parseFilename(fname: string) {
-    // <start_ts>-<end_ts>-<source>.wav
-    const [start, end, source] = fname.replace(".wav", "").split("-");
-    return { start, end, source };
+interface Track {
+    name: string;
+    audio: string;
+    duration: number;
+    offset: number;
 }
 
 export default function App() {
     const [transcript, setTranscript] = useState<Transcript>();
-    const [track, setTrack] = useState<{
-        start: number;
-        end: number;
-        source: Block["source"];
-        url: string;
-    }>();
+    const [track, setTrack] = useState<Track>();
     const [activeBlockId, setActiveBlockId] = useState<string>();
 
     const playerRef = useRef<HTMLDivElement>(null);
@@ -61,8 +51,8 @@ export default function App() {
 
                                 return {
                                     ...block,
-                                    from: region.start + prev.startTime,
-                                    to: region.end + prev.startTime,
+                                    from: region.start,
+                                    to: region.end,
                                 };
                             })
                             .sort((a, b) => a.from - b.from),
@@ -74,7 +64,7 @@ export default function App() {
     }, []);
 
     const { wavesurfer, isPlaying, currentTime } = useWavesurfer({
-        url: track?.url,
+        url: track?.audio,
         container: playerRef,
         waveColor: "#9ca3af",
         progressColor: "#fb923c",
@@ -133,33 +123,103 @@ export default function App() {
     async function onUpload(e: React.ChangeEvent<HTMLInputElement>) {
         const files = e.target.files;
         if (!files || files.length === 0) return;
-
-        const { start, end, source } = parseFilename(files[0].name);
+        const file = files[0];
+        // Compute duration
+        const audioContext = new window.AudioContext();
+        const arrayBuffer = await file.arrayBuffer();
+        const duration = await new Promise<number>((resolve) =>
+            audioContext.decodeAudioData(arrayBuffer, (buffer) => {
+                resolve(buffer.duration);
+            }),
+        );
 
         // Initialize transcript
-        setTranscript({
-            startTime: Number(start),
-            endTime: Number(end),
+        setTranscript((prev) => ({
+            startTime: 0,
+            // TODO: use ms timestamps for transcript
+            endTime:
+                prev?.endTime && prev.endTime > duration
+                    ? prev.endTime
+                    : duration,
             blocks: [],
-        });
+        }));
 
-        const audioURL = URL.createObjectURL(files[0]);
+        const audioURL = URL.createObjectURL(file);
         setTrack({
-            start: Number(start),
-            end: Number(end),
-            source: source as Block["source"],
-            url: audioURL,
+            name: file.name,
+            duration,
+            audio: audioURL,
+            offset: 0,
         });
     }
 
     if (track && transcript) {
         return (
-            <div className="h-screen flex-grow overflow-hidden border bg-slate-50">
-                <div className="flex h-full items-stretch overflow-hidden">
-                    <div className="flex h-full flex-grow flex-col overflow-hidden px-4">
-                        <div className="mt-12 flex h-full flex-grow flex-col overflow-hidden rounded-xl border bg-white">
-                            <div className="h-full w-full flex-grow overflow-y-scroll p-8">
-                                {transcript.blocks.map((currentBlock) => (
+            <div className="flex h-screen flex-col overflow-hidden bg-slate-50">
+                <header className="grid grid-cols-3 border-b bg-white">
+                    <div className="">
+                        <button className="relative h-full cursor-default p-3 hover:bg-slate-100">
+                            <Icons.FileAudio2
+                                size={18}
+                                className="text-slate-700"
+                            />
+                            <input
+                                className="absolute inset-0 opacity-0"
+                                type="file"
+                                name="audio_files"
+                                id="audio_files"
+                                accept=".wav"
+                                onChange={(e) => {
+                                    onUpload(e);
+                                }}
+                            />
+                        </button>
+                    </div>
+                    <div className="flex items-center justify-center space-x-1 p-2 text-xs">
+                        <span className="text-slate-500">Drafts</span>
+                        <span className="text-slate-500">/</span>
+                        <span>Untitled</span>
+                    </div>
+                    <div className="flex justify-end px-4 py-2">
+                        <button
+                            onClick={() => {
+                                const blob = new Blob(
+                                    [JSON.stringify(transcript, null, 4)],
+                                    { type: "application/json" },
+                                );
+                                const url = URL.createObjectURL(blob);
+                                const a = document.createElement("a");
+                                a.href = url;
+                                a.download = "groundTruth-transcript.json";
+                                document.body.appendChild(a);
+                                a.click();
+                                document.body.removeChild(a);
+                                URL.revokeObjectURL(url);
+                            }}
+                            className="flex cursor-default items-center space-x-1.5 rounded-md bg-indigo-600 py-1.5 pl-2 pr-3 text-xs font-medium text-white"
+                        >
+                            <Icons.FileJson2
+                                size={14}
+                                strokeWidth={2}
+                                className="text-indigo-50"
+                            />
+                            <span>Export</span>
+                        </button>
+                    </div>
+                </header>
+                <div className="flex h-full flex-1 items-stretch overflow-hidden">
+                    {/* Main Area */}
+                    <div className="flex h-full flex-grow flex-col divide-y overflow-hidden">
+                        {/* Transcription Area */}
+                        <div className="mx-auto h-full w-full max-w-2xl flex-1 space-y-0.5 divide-y divide-slate-50 overflow-y-scroll border-x bg-white py-8">
+                            {transcript.blocks.map((currentBlock) => (
+                                <div
+                                    key={currentBlock.id}
+                                    className="relative px-8 outline -outline-offset-1 outline-transparent hover:outline-indigo-500"
+                                >
+                                    {/* <div className="absolute right-0 top-0 m-2 rounded border bg-slate-100 px-2 py-0.5 text-xs">
+                                        speaker #0
+                                    </div> */}
                                     <TextareaAutosize
                                         key={currentBlock.id}
                                         minRows={1}
@@ -170,7 +230,7 @@ export default function App() {
                                         autoFocus={
                                             currentBlock.id === activeBlockId
                                         }
-                                        placeholder="Start transcribing"
+                                        placeholder="…"
                                         defaultValue={currentBlock.text}
                                         onChange={(e) => {
                                             setTranscript(
@@ -192,23 +252,29 @@ export default function App() {
                                                     },
                                             );
                                         }}
-                                        className="mx-auto flex w-full max-w-lg resize-none bg-white p-2 text-slate-900 focus:outline-none disabled:text-opacity-50"
+                                        className="mx-auto flex w-full max-w-xl resize-none bg-white py-4 text-sm text-slate-900 focus:outline-none disabled:text-opacity-50"
                                     />
-                                ))}
-                            </div>
-                            <Player ref={playerRef} />
+                                </div>
+                            ))}
+                        </div>
 
+                        {/* Track Players */}
+                        <Player ref={playerRef} />
+
+                        {/* Tools */}
+                        <div className="flex justify-center bg-white p-2">
                             <Button
                                 title="Add Segment"
                                 variant="outline"
-                                className="m-2 mx-auto rounded-full"
                                 onClick={() => {
+                                    // Add a new region in the player
                                     const newRegion = regionsPlugin.addRegion({
                                         start: currentTime,
                                         end: currentTime + 5,
                                         resize: true,
                                         drag: true,
                                     });
+                                    // Add a new block in the transcript
                                     setTranscript(
                                         (prev) =>
                                             prev && {
@@ -217,23 +283,20 @@ export default function App() {
                                                     ...prev.blocks,
                                                     {
                                                         id: newRegion.id,
-                                                        from:
-                                                            newRegion.start +
-                                                            prev.startTime,
-                                                        to:
-                                                            newRegion.end +
-                                                            prev.startTime,
+                                                        // TODO: use ms timestamps
+                                                        from: newRegion.start,
+                                                        to: newRegion.end,
                                                         text: "",
-                                                        source:
-                                                            track?.source ??
-                                                            "system",
+                                                        source: "system" as const,
                                                     },
                                                 ].sort(
                                                     (a, b) => a.from - b.from,
-                                                ), // FIXME: fails to properly sort the blocks
+                                                ),
                                             },
                                     );
+                                    setActiveBlockId(newRegion.id);
                                 }}
+                                className="rounded-full"
                             >
                                 <Icons.Plus width={16} />
                                 &nbsp;
@@ -241,6 +304,7 @@ export default function App() {
                             </Button>
                         </div>
 
+                        {/* Controls */}
                         <Controls
                             currentTime={currentTime}
                             duration={wavesurfer?.getDuration() || 0}
@@ -267,61 +331,47 @@ export default function App() {
                         />
                     </div>
 
-                    {/* Label Panel */}
-                    <nav className="flex w-[calc(min(20rem,30vw))] flex-shrink-0 flex-col border bg-white">
-                        <div className="flex-1">
-                            {activeBlockId ? (
-                                <>
-                                    <div className="px-4 py-2">
-                                        <span className="text-sm font-medium">
-                                            Labels
-                                        </span>
-                                    </div>
-                                    <div className="px-4 py-2">
-                                        <Label htmlFor="" className="text-xs">
-                                            Selection
-                                        </Label>
-                                        <div className="flex">
-                                            <Input type="text" />
-                                            <Input type="text" />
-                                        </div>
-                                    </div>
-                                    <div className="px-4 py-2">
-                                        <Label htmlFor="">Speaker</Label>
-                                        <Input type="text" />
-                                    </div>
-                                </>
-                            ) : (
-                                <div className="p-4">
-                                    <span className="text-sm font-medium">
-                                        Segments
-                                    </span>
-                                    <div className="divide-y rounded-md border">
-                                        {transcript.blocks.map((block) => (
-                                            <div
-                                                key={block.id}
-                                                className="grid grid-cols-2 divide-x px-2"
-                                            >
-                                                <span className="py-2 text-center text-xs">
-                                                    {block.from}
-                                                </span>
-                                                <span className="py-2 text-center text-xs">
-                                                    {block.to}
-                                                </span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                        <div className="h-full overflow-hidden p-4">
-                            <pre className="h-full overflow-auto rounded-lg bg-slate-800 px-4 py-2">
-                                <code className="font-mono text-xs text-slate-100">
-                                    {JSON.stringify(transcript, null, 2)}
-                                </code>
-                            </pre>
-                        </div>
-                    </nav>
+                    {/* Segments Menu */}
+                    <SegmentsMenu
+                        blocks={transcript.blocks.map((block) => {
+                            // FIXME: refactor to not always get all the regions
+                            const regions = regionsPlugin.getRegions();
+                            return {
+                                ...block,
+                                region: regions.find((r) => r.id === block.id),
+                            };
+                        })}
+                        onBlockChange={(newBlock) => {
+                            setTranscript(
+                                (prev) =>
+                                    prev && {
+                                        ...prev,
+                                        blocks: prev.blocks.map((block) => {
+                                            if (block.id === activeBlockId)
+                                                return newBlock;
+                                            return block;
+                                        }),
+                                    },
+                            );
+                        }}
+                        onBlockDelete={(blockId) => {
+                            // Remove block from transcript
+                            setTranscript(
+                                (prev) =>
+                                    prev && {
+                                        ...prev,
+                                        blocks: prev.blocks.filter(
+                                            (block) => block.id !== blockId,
+                                        ),
+                                    },
+                            );
+                            // Remove region from player
+                            regionsPlugin
+                                .getRegions()
+                                .find((r) => r.id === blockId)
+                                ?.remove();
+                        }}
+                    />
                 </div>
             </div>
         );
@@ -337,7 +387,6 @@ export default function App() {
                         <input
                             className="absolute inset-0 opacity-0"
                             type="file"
-                            multiple
                             name="audio_files"
                             id="audio_files"
                             accept=".wav"

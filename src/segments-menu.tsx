@@ -1,18 +1,13 @@
-import { useState } from "react";
 import { Block } from "./types";
 import { Region } from "wavesurfer.js/dist/plugins/regions.esm.js";
 import { Icons } from "./components";
 
 interface SegmentsMenuProps {
-    block?: Block;
-    region?: Region;
+    blocks: (Block & { region?: Region })[];
     onBlockChange(block: Block): void;
 }
 
 export default function SegmentsMenu(props: SegmentsMenuProps) {
-    const [isRegionLocked, setIsRegionLocked] = useState(
-        !(props.region?.resize || props.region?.drag),
-    );
     return (
         <nav className="flex w-[calc(min(15rem,25vw))] flex-shrink-0 flex-col divide-y border-l bg-white">
             <div className="flex items-center space-x-2 px-4 py-2">
@@ -20,9 +15,9 @@ export default function SegmentsMenu(props: SegmentsMenuProps) {
                 <span className="text-sm font-medium">Segments</span>
             </div>
 
-            <div className="flex-1">
-                {props.block && (
-                    <div key={props.block.id} className="flex space-x-2 p-4">
+            <div className="flex-1 divide-y divide-slate-100">
+                {props.blocks.map((block) => (
+                    <div key={block.id} className="flex space-x-2 px-4 py-2">
                         <div className="grid grid-cols-2 gap-0.5">
                             <div className="flex items-center border border-white outline-blue-500 focus-within:border-slate-200 focus-within:outline hover:border-slate-200">
                                 <div className="p-1">
@@ -36,14 +31,14 @@ export default function SegmentsMenu(props: SegmentsMenuProps) {
                                     type="text"
                                     name="from"
                                     id="from"
-                                    value={props.block.from}
+                                    value={block.from}
                                     onChange={(e) => {
                                         const value = Number(e.target.value);
                                         props.onBlockChange({
-                                            ...props.block!,
+                                            ...block!,
                                             from: value,
                                         });
-                                        props.region?.setOptions({
+                                        block.region?.setOptions({
                                             start: value,
                                         });
                                     }}
@@ -55,15 +50,15 @@ export default function SegmentsMenu(props: SegmentsMenuProps) {
                                     type="text"
                                     name="to"
                                     id="to"
-                                    value={props.block?.to}
+                                    value={block?.to}
                                     onChange={(e) => {
                                         const value = Number(e.target.value);
                                         props.onBlockChange({
-                                            ...props.block!,
+                                            ...block!,
                                             to: value,
                                         });
-                                        props.region?.setOptions({
-                                            ...props.region,
+                                        block.region?.setOptions({
+                                            ...block.region,
                                             end: value,
                                         });
                                     }}
@@ -78,25 +73,23 @@ export default function SegmentsMenu(props: SegmentsMenuProps) {
                         </div>
                         <button
                             onClick={() => {
-                                if (isRegionLocked) {
-                                    props.region?.setOptions({
-                                        ...props.region,
+                                if (block.isLocked) {
+                                    block.region?.setOptions({
+                                        ...block.region,
                                         resize: true,
                                         drag: true,
                                     });
-                                }
-                                if (!isRegionLocked) {
-                                    props.region?.setOptions({
-                                        ...props.region,
+                                } else {
+                                    block.region?.setOptions({
+                                        ...block.region,
                                         resize: false,
                                         drag: false,
                                     });
                                 }
-                                setIsRegionLocked((prev) => !prev);
                             }}
                             className="group rounded p-2 hover:bg-slate-100"
                         >
-                            {isRegionLocked ? (
+                            {block.isLocked ? (
                                 <Icons.UnlockIcon
                                     size={16}
                                     className="text-slate-300 group-hover:text-slate-500"
@@ -109,7 +102,7 @@ export default function SegmentsMenu(props: SegmentsMenuProps) {
                             )}
                         </button>
                     </div>
-                )}
+                ))}
             </div>
             {/* Display JSON transcript for debugging */}
             {/* <div className="flex-shrink overflow-hidden p-4">

@@ -5,4 +5,5 @@ export type Block = {
     text: string;
     source: "mic" | "system";
     speaker_id?: number;
+    isLocked?: boolean;
 };

@@ -333,12 +333,14 @@ export default function App() {
 
                     {/* Segments Menu */}
                     <SegmentsMenu
-                        block={transcript.blocks.find(
-                            (block) => block.id === activeBlockId,
-                        )}
-                        region={regionsPlugin
-                            .getRegions()
-                            .find((region) => region.id === activeBlockId)}
+                        blocks={transcript.blocks.map((block) => {
+                            // FIXME: refactor to not always get all the regions
+                            const regions = regionsPlugin.getRegions();
+                            return {
+                                ...block,
+                                region: regions.find((r) => r.id === block.id),
+                            };
+                        })}
                         onBlockChange={(newBlock) => {
                             setTranscript(
                                 (prev) =>

@@ -17,118 +17,132 @@ export default function SegmentsMenu(props: SegmentsMenuProps) {
             </div>
 
             <div className="flex-1 divide-y divide-slate-100">
-                {props.blocks.map((block) => (
-                    <div key={block.id} className="flex space-x-2 px-4 py-2">
-                        <div className="grid grid-cols-2 gap-0.5">
-                            <div className="flex items-center border border-white outline-blue-500 focus-within:border-slate-200 focus-within:outline hover:border-slate-200">
-                                <div className="p-1">
-                                    <Icons.PanelLeftDashed
-                                        size={16}
-                                        className="text-slate-300"
+                {props.blocks.map((block) => {
+                    let isLocked = !(
+                        block.region?.resize || block.region?.drag
+                    );
+                    return (
+                        <div
+                            key={block.id}
+                            className="flex space-x-2 px-4 py-2"
+                        >
+                            <div className="grid grid-cols-2 gap-0.5">
+                                <div className="flex items-center border border-white outline-blue-500 focus-within:border-slate-200 focus-within:outline hover:border-slate-200">
+                                    <div className="p-1">
+                                        <Icons.PanelLeftDashed
+                                            size={16}
+                                            className="text-slate-300"
+                                        />
+                                    </div>
+                                    <input
+                                        className="w-full flex-1 py-1.5 pl-1 pr-0 text-xs focus:outline-none"
+                                        type="text"
+                                        name="from"
+                                        id="from"
+                                        value={block.from}
+                                        onChange={(e) => {
+                                            const value = Number(
+                                                e.target.value,
+                                            );
+                                            props.onBlockChange({
+                                                ...block!,
+                                                from: value,
+                                            });
+                                            block.region?.setOptions({
+                                                start: value,
+                                            });
+                                        }}
                                     />
                                 </div>
-                                <input
-                                    className="w-full flex-1 py-1.5 pl-1 pr-0 text-xs focus:outline-none"
-                                    type="text"
-                                    name="from"
-                                    id="from"
-                                    value={block.from}
-                                    onChange={(e) => {
-                                        const value = Number(e.target.value);
-                                        props.onBlockChange({
-                                            ...block!,
-                                            from: value,
-                                        });
-                                        block.region?.setOptions({
-                                            start: value,
-                                        });
-                                    }}
-                                />
-                            </div>
-                            <div className="flex items-center border border-white outline-blue-500 focus-within:border-slate-200 focus-within:outline hover:border-slate-200">
-                                <input
-                                    className="w-full flex-1 py-1.5 pl-2 pr-0 text-xs focus:outline-none"
-                                    type="text"
-                                    name="to"
-                                    id="to"
-                                    value={block?.to}
-                                    onChange={(e) => {
-                                        const value = Number(e.target.value);
-                                        props.onBlockChange({
-                                            ...block!,
-                                            to: value,
-                                        });
-                                        block.region?.setOptions({
-                                            ...block.region,
-                                            end: value,
-                                        });
-                                    }}
-                                />
-                                <div className="p-1">
-                                    <Icons.PanelRightDashed
-                                        size={16}
-                                        className="text-slate-300"
+                                <div className="flex items-center border border-white outline-blue-500 focus-within:border-slate-200 focus-within:outline hover:border-slate-200">
+                                    <input
+                                        className="w-full flex-1 py-1.5 pl-2 pr-0 text-xs focus:outline-none"
+                                        type="text"
+                                        name="to"
+                                        id="to"
+                                        value={block?.to}
+                                        onChange={(e) => {
+                                            const value = Number(
+                                                e.target.value,
+                                            );
+                                            props.onBlockChange({
+                                                ...block!,
+                                                to: value,
+                                            });
+                                            block.region?.setOptions({
+                                                ...block.region,
+                                                end: value,
+                                            });
+                                        }}
                                     />
+                                    <div className="p-1">
+                                        <Icons.PanelRightDashed
+                                            size={16}
+                                            className="text-slate-300"
+                                        />
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                        <div className="flex items-center space-x-1">
-                            <button
-                                onClick={() => {
-                                    if (!block.region) return;
-                                    block.region.play();
-                                }}
-                                className="group rounded p-2 hover:bg-slate-100"
-                            >
-                                <Icons.Play
-                                    size={16}
-                                    className="text-slate-300 group-hover:text-slate-500"
-                                />
-                            </button>
-                            <button
-                                onClick={() => {
-                                    if (block.isLocked) {
-                                        block.region?.setOptions({
-                                            ...block.region,
-                                            resize: true,
-                                            drag: true,
-                                        });
-                                    } else {
-                                        block.region?.setOptions({
-                                            ...block.region,
-                                            resize: false,
-                                            drag: false,
-                                        });
-                                    }
-                                }}
-                                className="group rounded p-2 hover:bg-slate-100"
-                            >
-                                {block.isLocked ? (
-                                    <Icons.Unlock
+                            <div className="flex items-center space-x-1">
+                                <button
+                                    onClick={() => {
+                                        if (!block.region) return;
+                                        block.region.play();
+                                    }}
+                                    className="group rounded p-2 hover:bg-slate-100"
+                                >
+                                    <Icons.Play
                                         size={16}
                                         className="text-slate-300 group-hover:text-slate-500"
                                     />
-                                ) : (
-                                    <Icons.Lock
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        if (isLocked) {
+                                            block.region?.setOptions({
+                                                ...block.region,
+                                                resize: true,
+                                                drag: true,
+                                            });
+                                            isLocked = false;
+                                        } else {
+                                            block.region?.setOptions({
+                                                ...block.region,
+                                                resize: false,
+                                                drag: false,
+                                            });
+                                            isLocked = true;
+                                        }
+                                    }}
+                                    className="group rounded p-2 hover:bg-slate-100"
+                                >
+                                    {isLocked ? (
+                                        <Icons.Unlock
+                                            size={16}
+                                            className="text-slate-300 group-hover:text-slate-500"
+                                        />
+                                    ) : (
+                                        <Icons.Lock
+                                            size={16}
+                                            className="text-slate-300 group-hover:text-slate-500"
+                                        />
+                                    )}
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        props.onBlockDelete(block.id);
+                                    }}
+                                    className="group rounded p-2 hover:bg-slate-100"
+                                >
+                                    <Icons.Trash
                                         size={16}
                                         className="text-slate-300 group-hover:text-slate-500"
                                     />
-                                )}
-                            </button>
-                            <button
-                                onClick={() => {
-                                    props.onBlockDelete(block.id);
-                                }}
-                                className="group rounded p-2 hover:bg-slate-100"
-                            >
-                                <Icons.Trash
-                                    size={16}
-                                    className="text-slate-300 group-hover:text-slate-500"
-                                />
-                            </button>
+                                </button>
+                            </div>
                         </div>
-                    </div>
-                ))}
+                    );
+                })}
             </div>
             {/* Display JSON transcript for debugging */}
             {/* <div className="flex-shrink overflow-hidden p-4">

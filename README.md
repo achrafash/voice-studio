@@ -1,4 +1,3 @@
--   fix `block.isLocked` not being updated in the Segments Menu
 -   round block/region start/end values to ms increments
 -   use ms timestamps for blocks
 -   blank state

@@ -120,6 +120,26 @@ export default function App() {
         };
     }, [wavesurfer]);
 
+    // Prevent losing data when accidentally leaving the page
+    useEffect(() => {
+        if (!transcript || transcript.blocks.length === 0) return;
+
+        function preventLeaving(event: BeforeUnloadEvent) {
+            event.preventDefault();
+            return (event.returnValue = "");
+        }
+
+        window.addEventListener("beforeunload", preventLeaving, {
+            capture: true,
+        });
+
+        return () => {
+            window.removeEventListener("beforeunload", preventLeaving, {
+                capture: true,
+            });
+        };
+    }, [transcript]);
+
     async function onUpload(e: React.ChangeEvent<HTMLInputElement>) {
         const files = e.target.files;
         if (!files || files.length === 0) return;

@@ -71,36 +71,50 @@ export default function SegmentsMenu(props: SegmentsMenuProps) {
                                 </div>
                             </div>
                         </div>
-                        <button
-                            onClick={() => {
-                                if (block.isLocked) {
-                                    block.region?.setOptions({
-                                        ...block.region,
-                                        resize: true,
-                                        drag: true,
-                                    });
-                                } else {
-                                    block.region?.setOptions({
-                                        ...block.region,
-                                        resize: false,
-                                        drag: false,
-                                    });
-                                }
-                            }}
-                            className="group rounded p-2 hover:bg-slate-100"
-                        >
-                            {block.isLocked ? (
-                                <Icons.UnlockIcon
+                        <div className="flex items-center space-x-1">
+                            <button
+                                onClick={() => {
+                                    if (!block.region) return;
+                                    block.region.play();
+                                }}
+                                className="group rounded p-2 hover:bg-slate-100"
+                            >
+                                <Icons.Play
                                     size={16}
                                     className="text-slate-300 group-hover:text-slate-500"
                                 />
-                            ) : (
-                                <Icons.LockIcon
-                                    size={16}
-                                    className="text-slate-300 group-hover:text-slate-500"
-                                />
-                            )}
-                        </button>
+                            </button>
+                            <button
+                                onClick={() => {
+                                    if (block.isLocked) {
+                                        block.region?.setOptions({
+                                            ...block.region,
+                                            resize: true,
+                                            drag: true,
+                                        });
+                                    } else {
+                                        block.region?.setOptions({
+                                            ...block.region,
+                                            resize: false,
+                                            drag: false,
+                                        });
+                                    }
+                                }}
+                                className="group rounded p-2 hover:bg-slate-100"
+                            >
+                                {block.isLocked ? (
+                                    <Icons.UnlockIcon
+                                        size={16}
+                                        className="text-slate-300 group-hover:text-slate-500"
+                                    />
+                                ) : (
+                                    <Icons.LockIcon
+                                        size={16}
+                                        className="text-slate-300 group-hover:text-slate-500"
+                                    />
+                                )}
+                            </button>
+                        </div>
                     </div>
                 ))}
             </div>

@@ -286,17 +286,24 @@ export default function App() {
 
                                                     // Convert timestamps ms -> sec
                                                     data.startTime /= 1_000;
-                                                    data.endTime /= 1_000;
+                                                    data.endTime =
+                                                        data.endTime / 1_000 -
+                                                        data.startTime;
                                                     data.blocks =
                                                         data.blocks.map(
                                                             (block: Block) => ({
                                                                 ...block,
+                                                                id:
+                                                                    block.id ||
+                                                                    window.crypto.randomUUID(),
                                                                 from:
                                                                     block.from /
-                                                                    1_000,
+                                                                        1_000 -
+                                                                    data.startTime,
                                                                 to:
                                                                     block.to /
-                                                                    1_000,
+                                                                        1_000 -
+                                                                    data.startTime,
                                                             }),
                                                         );
 

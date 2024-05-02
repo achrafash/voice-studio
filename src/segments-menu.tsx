@@ -10,7 +10,7 @@ interface SegmentsMenuProps {
 
 export default function SegmentsMenu(props: SegmentsMenuProps) {
     return (
-        <nav className="flex w-[calc(min(15rem,25vw))] flex-shrink-0 flex-col divide-y border-l bg-white">
+        <nav className="flex w-[calc(min(15rem,25vw))] flex-shrink-0 flex-col divide-y overflow-y-auto border-l bg-white">
             <div className="flex items-center space-x-2 px-4 py-2">
                 <Icons.FlipHorizontal size={14} className="text-slate-800" />
                 <span className="text-sm font-medium">Segments</span>

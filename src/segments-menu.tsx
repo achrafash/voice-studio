@@ -18,9 +18,7 @@ export default function SegmentsMenu(props: SegmentsMenuProps) {
 
             <div className="flex-1 divide-y divide-slate-100">
                 {props.blocks.map((block) => {
-                    let isLocked = !(
-                        block.region?.resize || block.region?.drag
-                    );
+                    let isLocked = !block.region?.drag;
                     return (
                         <div
                             key={block.id}
@@ -101,14 +99,12 @@ export default function SegmentsMenu(props: SegmentsMenuProps) {
                                         if (isLocked) {
                                             block.region?.setOptions({
                                                 ...block.region,
-                                                resize: true,
                                                 drag: true,
                                             });
                                             isLocked = false;
                                         } else {
                                             block.region?.setOptions({
                                                 ...block.region,
-                                                resize: false,
                                                 drag: false,
                                             });
                                             isLocked = true;

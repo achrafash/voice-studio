@@ -198,54 +198,71 @@ export default function App() {
                     <div className="flex items-center justify-center space-x-1 p-2 text-xs">
                         <span className="text-slate-500">Drafts</span>
                         <span className="text-slate-500">/</span>
-                        <span>Untitled</span>
+                        <input
+                            placeholder="Untitled"
+                            className="w-full text-xs focus:outline-none"
+                        />
                     </div>
                     <div className="flex justify-end px-4 py-2">
-                        <button
-                            onClick={() => {
-                                const blob = new Blob(
-                                    [
-                                        // Convert timestamps to ms
-                                        JSON.stringify(
-                                            {
-                                                startTime:
-                                                    transcript.startTime *
-                                                    1_000,
-                                                endTime:
-                                                    transcript.endTime * 1_000,
-                                                blocks: transcript.blocks.map(
-                                                    (block) => ({
-                                                        ...block,
-                                                        from:
-                                                            block.from * 1_000,
-                                                        to: block.to * 1_000,
-                                                    }),
-                                                ),
-                                            },
-                                            null,
-                                            4,
-                                        ),
-                                    ],
-                                    { type: "application/json" },
-                                );
-                                const url = URL.createObjectURL(blob);
-                                const a = document.createElement("a");
-                                a.href = url;
-                                a.download = "groundTruth-transcript.json";
-                                document.body.appendChild(a);
-                                a.click();
-                                document.body.removeChild(a);
-                                URL.revokeObjectURL(url);
-                            }}
-                            className="flex cursor-default items-center space-x-1.5 rounded-md bg-indigo-600 py-1.5 pl-2 pr-3 text-xs font-medium text-white"
-                        >
-                            <Icons.FileJson2
-                                size={14}
-                                strokeWidth={2}
-                                className="text-indigo-50"
-                            />
-                            <span>Export</span>
-                        </button>
+                        <div className="flex items-stretch divide-x divide-indigo-400 overflow-hidden rounded-md border-2 border-indigo-300 bg-indigo-500 text-indigo-50">
+                            <button
+                                onClick={() => {
+                                    const blob = new Blob(
+                                        [
+                                            // Convert timestamps to ms
+                                            JSON.stringify(
+                                                {
+                                                    startTime:
+                                                        transcript.startTime *
+                                                        1_000,
+                                                    endTime:
+                                                        transcript.endTime *
+                                                        1_000,
+                                                    blocks: transcript.blocks.map(
+                                                        (block) => ({
+                                                            ...block,
+                                                            from:
+                                                                block.from *
+                                                                1_000,
+                                                            to:
+                                                                block.to *
+                                                                1_000,
+                                                        }),
+                                                    ),
+                                                },
+                                                null,
+                                                4,
+                                            ),
+                                        ],
+                                        { type: "application/json" },
+                                    );
+                                    const url = URL.createObjectURL(blob);
+                                    const a = document.createElement("a");
+                                    a.href = url;
+                                    a.download = "groundTruth-transcript.json";
+                                    document.body.appendChild(a);
+                                    a.click();
+                                    document.body.removeChild(a);
+                                    URL.revokeObjectURL(url);
+                                }}
+                                className="cursor-default px-3 py-1.5 text-xs font-medium"
+                            >
+                                <span>Export</span>
+                            </button>
+                            <button
+                                onClick={async () => {
+                                    await navigator.clipboard.writeText(
+                                        JSON.stringify(transcript, null, 4),
+                                    );
+                                    alert(
+                                        "The transcript was copied to your clipboard.",
+                                    );
+                                }}
+                                className="cursor-default px-3 py-1.5 text-xs font-medium"
+                            >
+                                Copy
+                            </button>
+                        </div>
                     </div>
                 </header>
                 <div className="flex h-full flex-1 items-stretch overflow-hidden">

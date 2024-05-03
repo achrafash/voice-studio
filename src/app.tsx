@@ -107,8 +107,8 @@ export default function App() {
                 transcript.blocks.forEach((block) => {
                     regionsPlugin.addRegion({
                         id: block.id,
-                        start: block.from - transcript.startTime,
-                        end: block.to - transcript.startTime,
+                        start: block.from,
+                        end: block.to,
                     });
                     console.log(`created region #${block.id}`);
                 });
@@ -288,129 +288,136 @@ export default function App() {
                     {/* Main Area */}
                     <div className="flex h-full flex-grow flex-col divide-y overflow-hidden">
                         {/* Transcription Area */}
-                        <div className="relative mx-auto h-full w-full max-w-2xl flex-1 space-y-0.5 divide-y divide-slate-50 overflow-y-scroll border-x bg-white py-8">
-                            {transcript?.blocks?.length === 0 && (
-                                <div className="absolute inset-0 mx-auto flex w-max flex-col justify-center space-y-2 text-sm">
-                                    <Label htmlFor="transcript">
-                                        Already have a transcript? Start from
-                                        there!
-                                    </Label>
-                                    <Input
-                                        type="file"
-                                        accept="json"
-                                        name="transcript"
-                                        id="transcript"
-                                        className="text-sm"
-                                        onChange={(e) => {
-                                            if (
-                                                !e.target.files ||
-                                                e.target.files.length === 0
-                                            )
-                                                return;
-                                            const file = e.target.files[0];
-                                            if (
-                                                file.type !== "application/json"
-                                            )
-                                                return;
-                                            const reader = new FileReader();
-                                            reader.onload = (event) => {
-                                                const content = event.target
-                                                    ?.result as string;
-                                                try {
-                                                    const data =
-                                                        JSON.parse(content);
+                        <div className="flex-1 overflow-y-auto">
+                            <div className="relative mx-auto w-full max-w-2xl space-y-0.5 divide-y divide-slate-50 border-x bg-white py-8">
+                                {transcript?.blocks?.length === 0 && (
+                                    <div className="absolute inset-0 mx-auto flex w-max flex-col justify-center space-y-2 text-sm">
+                                        <Label htmlFor="transcript">
+                                            Already have a transcript? Start
+                                            from there!
+                                        </Label>
+                                        <Input
+                                            type="file"
+                                            accept="json"
+                                            name="transcript"
+                                            id="transcript"
+                                            className="text-sm"
+                                            onChange={(e) => {
+                                                if (
+                                                    !e.target.files ||
+                                                    e.target.files.length === 0
+                                                )
+                                                    return;
+                                                const file = e.target.files[0];
+                                                if (
+                                                    file.type !==
+                                                    "application/json"
+                                                )
+                                                    return;
+                                                const reader = new FileReader();
+                                                reader.onload = (event) => {
+                                                    const content = event.target
+                                                        ?.result as string;
+                                                    try {
+                                                        const data =
+                                                            JSON.parse(content);
 
-                                                    // Convert timestamps ms -> sec
-                                                    data.startTime /= 1_000;
-                                                    data.endTime =
-                                                        data.endTime / 1_000 -
-                                                        data.startTime;
-                                                    data.blocks =
-                                                        data.blocks.map(
-                                                            (block: Block) => ({
-                                                                ...block,
-                                                                id:
-                                                                    block.id ||
-                                                                    window.crypto.randomUUID(),
-                                                                from:
-                                                                    block.from /
-                                                                        1_000 -
-                                                                    data.startTime,
-                                                                to:
-                                                                    block.to /
-                                                                        1_000 -
-                                                                    data.startTime,
-                                                            }),
-                                                        );
-
-                                                    setTranscript(data);
-                                                    data.blocks.map(
-                                                        (block: Block) => {
-                                                            regionsPlugin.addRegion(
-                                                                {
-                                                                    id: block.id,
-                                                                    start: block.from,
-                                                                    end: block.to,
-                                                                },
+                                                        // Convert timestamps ms -> sec
+                                                        data.startTime /= 1_000;
+                                                        data.endTime =
+                                                            data.endTime /
+                                                                1_000 -
+                                                            data.startTime;
+                                                        data.blocks =
+                                                            data.blocks.map(
+                                                                (
+                                                                    block: Block,
+                                                                ) => ({
+                                                                    ...block,
+                                                                    id:
+                                                                        block.id ||
+                                                                        window.crypto.randomUUID(),
+                                                                    from:
+                                                                        block.from /
+                                                                            1_000 -
+                                                                        data.startTime,
+                                                                    to:
+                                                                        block.to /
+                                                                            1_000 -
+                                                                        data.startTime,
+                                                                }),
                                                             );
-                                                        },
-                                                    );
-                                                } catch (error) {
-                                                    console.error(error);
-                                                }
-                                            };
-                                            reader.readAsText(file);
-                                        }}
-                                    />
-                                </div>
-                            )}
 
-                            {transcript.blocks.map((currentBlock) => (
-                                <div
-                                    key={currentBlock.id}
-                                    className="relative px-8 outline -outline-offset-1 outline-transparent hover:outline-indigo-500"
-                                >
-                                    {/* <div className="absolute right-0 top-0 m-2 rounded border bg-slate-100 px-2 py-0.5 text-xs">
+                                                        setTranscript(data);
+                                                        data.blocks.map(
+                                                            (block: Block) => {
+                                                                regionsPlugin.addRegion(
+                                                                    {
+                                                                        id: block.id,
+                                                                        start: block.from,
+                                                                        end: block.to,
+                                                                    },
+                                                                );
+                                                            },
+                                                        );
+                                                    } catch (error) {
+                                                        console.error(error);
+                                                    }
+                                                };
+                                                reader.readAsText(file);
+                                            }}
+                                        />
+                                    </div>
+                                )}
+
+                                {transcript.blocks.map((currentBlock) => (
+                                    <div
+                                        key={currentBlock.id}
+                                        className="relative px-8 outline -outline-offset-1 outline-transparent hover:outline-indigo-500"
+                                    >
+                                        {/* <div className="absolute right-0 top-0 m-2 rounded border bg-slate-100 px-2 py-0.5 text-xs">
                                         speaker #0
                                     </div> */}
-                                    <TextareaAutosize
-                                        key={currentBlock.id}
-                                        minRows={1}
-                                        name="transcription"
-                                        disabled={
-                                            currentBlock.id !== activeBlockId
-                                        }
-                                        autoFocus={
-                                            currentBlock.id === activeBlockId
-                                        }
-                                        placeholder="…"
-                                        defaultValue={currentBlock.text}
-                                        onChange={(e) => {
-                                            setTranscript(
-                                                (prev) =>
-                                                    prev && {
-                                                        ...prev,
-                                                        blocks: prev.blocks.map(
-                                                            (block) =>
-                                                                block.id !==
-                                                                currentBlock.id
-                                                                    ? block
-                                                                    : {
-                                                                          ...currentBlock,
-                                                                          text: e
-                                                                              .target
-                                                                              .value,
-                                                                      },
-                                                        ),
-                                                    },
-                                            );
-                                        }}
-                                        className="mx-auto flex w-full max-w-xl resize-none bg-white py-4 text-sm text-slate-900 focus:outline-none disabled:text-opacity-50"
-                                    />
-                                </div>
-                            ))}
+                                        <TextareaAutosize
+                                            key={currentBlock.id}
+                                            minRows={1}
+                                            name="transcription"
+                                            disabled={
+                                                currentBlock.id !==
+                                                activeBlockId
+                                            }
+                                            autoFocus={
+                                                currentBlock.id ===
+                                                activeBlockId
+                                            }
+                                            placeholder="…"
+                                            defaultValue={currentBlock.text}
+                                            onChange={(e) => {
+                                                setTranscript(
+                                                    (prev) =>
+                                                        prev && {
+                                                            ...prev,
+                                                            blocks: prev.blocks.map(
+                                                                (block) =>
+                                                                    block.id !==
+                                                                    currentBlock.id
+                                                                        ? block
+                                                                        : {
+                                                                              ...currentBlock,
+                                                                              text: e
+                                                                                  .target
+                                                                                  .value,
+                                                                          },
+                                                            ),
+                                                        },
+                                                );
+                                            }}
+                                            className="mx-auto flex w-full max-w-xl resize-none bg-white py-4 text-sm text-slate-900 focus:outline-none disabled:text-opacity-50"
+                                        />
+                                    </div>
+                                ))}
+                            </div>
                         </div>
-
                         {/* Track Players */}
                         <Player ref={playerRef} />
 

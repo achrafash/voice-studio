@@ -252,7 +252,26 @@ export default function App() {
                             <button
                                 onClick={async () => {
                                     await navigator.clipboard.writeText(
-                                        JSON.stringify(transcript, null, 4),
+                                        // Convert timestamps to ms
+                                        JSON.stringify(
+                                            {
+                                                startTime:
+                                                    transcript.startTime *
+                                                    1_000,
+                                                endTime:
+                                                    transcript.endTime * 1_000,
+                                                blocks: transcript.blocks.map(
+                                                    (block) => ({
+                                                        ...block,
+                                                        from:
+                                                            block.from * 1_000,
+                                                        to: block.to * 1_000,
+                                                    }),
+                                                ),
+                                            },
+                                            null,
+                                            4,
+                                        ),
                                     );
                                     alert(
                                         "The transcript was copied to your clipboard.",

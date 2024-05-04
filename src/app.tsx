@@ -193,12 +193,12 @@ export default function App() {
                     </button>
                 </div>
                 <div className="flex items-center justify-center space-x-1 p-2 text-xs">
-                    <span className="text-stone-500">Drafts</span>
-                    <span className="text-stone-500">/</span>
-                    <input
-                        placeholder="Untitled"
-                        className="text-xs text-stone-800 focus:outline-none"
-                    />
+                    <div className="rounded-md border border-stone-200 px-3 py-1.5 shadow-sm">
+                        <input
+                            placeholder={track?.name ?? "Untitled"}
+                            className="text-center text-xs text-stone-800 focus:outline-none"
+                        />
+                    </div>
                 </div>
                 <div className="flex justify-end px-4 py-2">
                     <div className="flex items-stretch divide-x divide-stone-200 overflow-hidden rounded-md border border-stone-200 bg-white focus-within:border-amber-400 focus-within:outline focus-within:outline-2 focus-within:outline-orange-300/20">

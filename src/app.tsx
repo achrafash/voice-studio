@@ -400,7 +400,7 @@ export default function App() {
                                                     },
                                             );
                                         }}
-                                        className="mx-auto flex w-full max-w-xl resize-none bg-white px-4 py-3 text-sm text-stone-900 focus:outline-none disabled:text-opacity-50"
+                                        className="mx-auto flex w-full max-w-2xl resize-none rounded-lg bg-white px-8 py-3 text-sm text-stone-800 focus:outline-none disabled:text-opacity-50"
                                     />
                                 </div>
                             ))}

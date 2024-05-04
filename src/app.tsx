@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 // Wavesurfer
 import { useWavesurfer } from "@wavesurfer/react";
-import TimelinePlugin from "wavesurfer.js/dist/plugins/timeline.esm.js";
 import MinimapPlugin from "wavesurfer.js/dist/plugins/minimap.esm.js";
 import RegionsPlugin from "wavesurfer.js/dist/plugins/regions.esm.js";
 
@@ -9,7 +8,6 @@ import TextareaAutosize from "react-textarea-autosize";
 import { Button, Icons, Input, Label } from "@/components";
 
 import Controls from "./controls";
-import Player from "./player";
 import SegmentsMenu from "./segments-menu";
 
 import { Block } from "./types";
@@ -31,7 +29,9 @@ export default function App() {
     const [track, setTrack] = useState<Track>();
     const [activeBlockId, setActiveBlockId] = useState<string>();
 
-    const playerRef = useRef<HTMLDivElement>(null);
+    const playerRef = useRef(null);
+    const minimapRef = useRef(null);
+
     const regionsPlugin = useMemo(() => {
         const regionsPlugin = new RegionsPlugin();
         regionsPlugin.on("region-in", (region) => {
@@ -70,11 +70,12 @@ export default function App() {
         progressColor: "#f59e0b",
         dragToSeek: true,
         interact: true,
-        normalize: true,
-        barGap: 2,
-        barWidth: 2,
+        // normalize: true,
+        barHeight: 0.8,
+        barGap: 1.5,
+        barWidth: 1.5,
         barRadius: 2,
-        height: 120,
+        height: 100,
         autoCenter: true,
         cursorColor: "#dc2626",
         cursorWidth: 1.5,
@@ -82,10 +83,6 @@ export default function App() {
         plugins: useMemo(() => {
             return [
                 regionsPlugin,
-                new TimelinePlugin({
-                    insertPosition: "afterend",
-                    // TODO: provide a container to put it where I want
-                }),
                 new MinimapPlugin({
                     cursorWidth: 0,
                     waveColor: "#e7e5e4",
@@ -94,7 +91,9 @@ export default function App() {
                     barGap: 0,
                     barWidth: 1.5,
                     barAlign: "bottom",
-                    // TODO: provide a container to put it where I want
+                    normalize: true,
+                    height: 24,
+                    container: minimapRef.current ?? undefined,
                 }),
             ];
         }, []),
@@ -408,7 +407,14 @@ export default function App() {
                         </div>
                     </div>
                     {/* Track Players */}
-                    <Player ref={playerRef} />
+                    <div className="flex flex-col space-y-4 border-y border-stone-200 px-4 py-2">
+                        <div id="waveform" ref={playerRef} />
+                        <div
+                            id="minimap"
+                            ref={minimapRef}
+                            className="overflow-hidden rounded-lg border border-stone-200/50"
+                        />
+                    </div>
 
                     {/* Tools */}
                     <div className="flex justify-center bg-white p-2">

@@ -173,85 +173,43 @@ export default function App() {
         });
     }
 
-    if (track && transcript) {
-        return (
-            <div className="flex h-screen flex-col overflow-hidden bg-slate-50">
-                <header className="grid grid-cols-3 border-b bg-white">
-                    <div className="">
-                        <button className="relative h-full cursor-default p-3 hover:bg-slate-100">
-                            <Icons.FileAudio2
-                                size={18}
-                                className="text-slate-700"
-                            />
-                            <input
-                                className="absolute inset-0 opacity-0"
-                                type="file"
-                                name="audio_files"
-                                id="audio_files"
-                                accept=".wav"
-                                onChange={(e) => {
-                                    onUpload(e);
-                                }}
-                            />
-                        </button>
-                    </div>
-                    <div className="flex items-center justify-center space-x-1 p-2 text-xs">
-                        <span className="text-slate-500">Drafts</span>
-                        <span className="text-slate-500">/</span>
-                        <input
-                            placeholder="Untitled"
-                            className="w-full text-xs focus:outline-none"
+    return (
+        <div className="flex h-screen flex-col overflow-hidden bg-slate-50">
+            <header className="grid grid-cols-3 border-b bg-white">
+                <div className="">
+                    <button className="relative h-full cursor-default p-3 hover:bg-slate-100">
+                        <Icons.FileAudio2
+                            size={18}
+                            className="text-slate-700"
                         />
-                    </div>
-                    <div className="flex justify-end px-4 py-2">
-                        <div className="flex items-stretch divide-x divide-indigo-400 overflow-hidden rounded-md border-2 border-indigo-300 bg-indigo-500 text-indigo-50">
-                            <button
-                                onClick={() => {
-                                    const blob = new Blob(
-                                        [
-                                            // Convert timestamps to ms
-                                            JSON.stringify(
-                                                {
-                                                    startTime:
-                                                        transcript.startTime *
-                                                        1_000,
-                                                    endTime:
-                                                        transcript.endTime *
-                                                        1_000,
-                                                    blocks: transcript.blocks.map(
-                                                        (block) => ({
-                                                            ...block,
-                                                            from:
-                                                                block.from *
-                                                                1_000,
-                                                            to:
-                                                                block.to *
-                                                                1_000,
-                                                        }),
-                                                    ),
-                                                },
-                                                null,
-                                                4,
-                                            ),
-                                        ],
-                                        { type: "application/json" },
-                                    );
-                                    const url = URL.createObjectURL(blob);
-                                    const a = document.createElement("a");
-                                    a.href = url;
-                                    a.download = "groundTruth-transcript.json";
-                                    document.body.appendChild(a);
-                                    a.click();
-                                    document.body.removeChild(a);
-                                    URL.revokeObjectURL(url);
-                                }}
-                                className="cursor-default px-3 py-1.5 text-xs font-medium"
-                            >
-                                <span>Export</span>
-                            </button>
-                            <button
-                                onClick={async () => {
-                                    await navigator.clipboard.writeText(
+                        <input
+                            className="absolute inset-0 opacity-0"
+                            type="file"
+                            name="audio_files"
+                            id="audio_files"
+                            accept=".wav"
+                            onChange={(e) => {
+                                onUpload(e);
+                            }}
+                        />
+                    </button>
+                </div>
+                <div className="flex items-center justify-center space-x-1 p-2 text-xs">
+                    <span className="text-slate-500">Drafts</span>
+                    <span className="text-slate-500">/</span>
+                    <input
+                        placeholder="Untitled"
+                        className="w-full text-xs focus:outline-none"
+                    />
+                </div>
+                <div className="flex justify-end px-4 py-2">
+                    <div className="flex items-stretch divide-x divide-indigo-400 overflow-hidden rounded-md border-2 border-indigo-300 bg-indigo-500 text-indigo-50">
+                        <button
+                            disabled={!transcript}
+                            onClick={() => {
+                                if (!transcript) return;
+                                const blob = new Blob(
+                                    [
                                         // Convert timestamps to ms
                                         JSON.stringify(
                                             {
@@ -272,312 +230,301 @@ export default function App() {
                                             null,
                                             4,
                                         ),
-                                    );
-                                    alert(
-                                        "The transcript was copied to your clipboard.",
-                                    );
-                                }}
-                                className="cursor-default px-3 py-1.5 text-xs font-medium"
-                            >
-                                Copy
-                            </button>
-                        </div>
+                                    ],
+                                    { type: "application/json" },
+                                );
+                                const url = URL.createObjectURL(blob);
+                                const a = document.createElement("a");
+                                a.href = url;
+                                a.download = "groundTruth-transcript.json";
+                                document.body.appendChild(a);
+                                a.click();
+                                document.body.removeChild(a);
+                                URL.revokeObjectURL(url);
+                            }}
+                            className="cursor-default px-3 py-1.5 text-xs font-medium"
+                        >
+                            <span>Export</span>
+                        </button>
+                        <button
+                            disabled={!transcript}
+                            onClick={async () => {
+                                if (!transcript) return;
+                                await navigator.clipboard.writeText(
+                                    // Convert timestamps to ms
+                                    JSON.stringify(
+                                        {
+                                            startTime:
+                                                transcript.startTime * 1_000,
+                                            endTime: transcript.endTime * 1_000,
+                                            blocks: transcript.blocks.map(
+                                                (block) => ({
+                                                    ...block,
+                                                    from: block.from * 1_000,
+                                                    to: block.to * 1_000,
+                                                }),
+                                            ),
+                                        },
+                                        null,
+                                        4,
+                                    ),
+                                );
+                                alert(
+                                    "The transcript was copied to your clipboard.",
+                                );
+                            }}
+                            className="cursor-default px-3 py-1.5 text-xs font-medium"
+                        >
+                            Copy
+                        </button>
                     </div>
-                </header>
-                <div className="flex h-full flex-1 items-stretch overflow-hidden">
-                    {/* Main Area */}
-                    <div className="flex h-full flex-grow flex-col divide-y overflow-hidden">
-                        {/* Transcription Area */}
-                        <div className="flex-1 overflow-y-auto">
-                            <div className="relative mx-auto w-full max-w-2xl space-y-0.5 divide-y divide-slate-50 border-x bg-white py-8">
-                                {transcript?.blocks?.length === 0 && (
-                                    <div className="absolute inset-0 mx-auto flex w-max flex-col justify-center space-y-2 text-sm">
-                                        <Label htmlFor="transcript">
-                                            Already have a transcript? Start
-                                            from there!
-                                        </Label>
-                                        <Input
-                                            type="file"
-                                            accept="json"
-                                            name="transcript"
-                                            id="transcript"
-                                            className="text-sm"
-                                            onChange={(e) => {
-                                                if (
-                                                    !e.target.files ||
-                                                    e.target.files.length === 0
-                                                )
-                                                    return;
-                                                const file = e.target.files[0];
-                                                if (
-                                                    file.type !==
-                                                    "application/json"
-                                                )
-                                                    return;
-                                                const reader = new FileReader();
-                                                reader.onload = (event) => {
-                                                    const content = event.target
-                                                        ?.result as string;
-                                                    try {
-                                                        const data =
-                                                            JSON.parse(content);
+                </div>
+            </header>
+            <div className="flex h-full flex-1 items-stretch overflow-hidden">
+                {/* Main Area */}
+                <div className="flex h-full flex-grow flex-col divide-y overflow-hidden">
+                    {/* Transcription Area */}
+                    <div className="flex-1 overflow-y-auto">
+                        <div className="relative mx-auto h-full w-full max-w-2xl space-y-0.5 divide-y divide-slate-50 border-x bg-white py-8">
+                            {transcript?.blocks?.length === 0 && (
+                                <div className="absolute inset-0 mx-auto flex w-max flex-col justify-center space-y-2 text-sm">
+                                    <Label htmlFor="transcript">
+                                        Already have a transcript? Start from
+                                        there!
+                                    </Label>
+                                    <Input
+                                        type="file"
+                                        accept="json"
+                                        name="transcript"
+                                        id="transcript"
+                                        className="text-sm"
+                                        onChange={(e) => {
+                                            if (
+                                                !e.target.files ||
+                                                e.target.files.length === 0
+                                            )
+                                                return;
+                                            const file = e.target.files[0];
+                                            if (
+                                                file.type !== "application/json"
+                                            )
+                                                return;
+                                            const reader = new FileReader();
+                                            reader.onload = (event) => {
+                                                const content = event.target
+                                                    ?.result as string;
+                                                try {
+                                                    const data =
+                                                        JSON.parse(content);
 
-                                                        // Convert timestamps ms -> sec
-                                                        data.startTime /= 1_000;
-                                                        data.endTime =
-                                                            data.endTime /
-                                                                1_000 -
-                                                            data.startTime;
-                                                        data.blocks =
-                                                            data.blocks.map(
-                                                                (
-                                                                    block: Block,
-                                                                ) => ({
-                                                                    ...block,
-                                                                    id:
-                                                                        block.id ||
-                                                                        window.crypto.randomUUID(),
-                                                                    from:
-                                                                        block.from /
-                                                                            1_000 -
-                                                                        data.startTime,
-                                                                    to:
-                                                                        block.to /
-                                                                            1_000 -
-                                                                        data.startTime,
-                                                                }),
-                                                            );
-
-                                                        setTranscript(data);
+                                                    // Convert timestamps ms -> sec
+                                                    data.startTime /= 1_000;
+                                                    data.endTime =
+                                                        data.endTime / 1_000 -
+                                                        data.startTime;
+                                                    data.blocks =
                                                         data.blocks.map(
-                                                            (block: Block) => {
-                                                                regionsPlugin.addRegion(
-                                                                    {
-                                                                        id: block.id,
-                                                                        start: block.from,
-                                                                        end: block.to,
-                                                                    },
-                                                                );
-                                                            },
+                                                            (block: Block) => ({
+                                                                ...block,
+                                                                id:
+                                                                    block.id ||
+                                                                    window.crypto.randomUUID(),
+                                                                from:
+                                                                    block.from /
+                                                                        1_000 -
+                                                                    data.startTime,
+                                                                to:
+                                                                    block.to /
+                                                                        1_000 -
+                                                                    data.startTime,
+                                                            }),
                                                         );
-                                                    } catch (error) {
-                                                        console.error(error);
-                                                    }
-                                                };
-                                                reader.readAsText(file);
-                                            }}
-                                        />
-                                    </div>
-                                )}
 
-                                {transcript.blocks.map((currentBlock) => (
-                                    <div
-                                        key={currentBlock.id}
-                                        className="relative px-8 outline -outline-offset-1 outline-transparent hover:outline-indigo-500"
-                                    >
-                                        {/* <div className="absolute right-0 top-0 m-2 rounded border bg-slate-100 px-2 py-0.5 text-xs">
+                                                    setTranscript(data);
+                                                    data.blocks.map(
+                                                        (block: Block) => {
+                                                            regionsPlugin.addRegion(
+                                                                {
+                                                                    id: block.id,
+                                                                    start: block.from,
+                                                                    end: block.to,
+                                                                },
+                                                            );
+                                                        },
+                                                    );
+                                                } catch (error) {
+                                                    console.error(error);
+                                                }
+                                            };
+                                            reader.readAsText(file);
+                                        }}
+                                    />
+                                </div>
+                            )}
+
+                            {transcript?.blocks.map((currentBlock) => (
+                                <div
+                                    key={currentBlock.id}
+                                    className="relative px-8 outline -outline-offset-1 outline-transparent hover:outline-indigo-500"
+                                >
+                                    {/* <div className="absolute right-0 top-0 m-2 rounded border bg-slate-100 px-2 py-0.5 text-xs">
                                         speaker #0
                                     </div> */}
-                                        <TextareaAutosize
-                                            key={currentBlock.id}
-                                            minRows={1}
-                                            name="transcription"
-                                            disabled={
-                                                currentBlock.id !==
-                                                activeBlockId
-                                            }
-                                            autoFocus={
-                                                currentBlock.id ===
-                                                activeBlockId
-                                            }
-                                            placeholder="…"
-                                            defaultValue={currentBlock.text}
-                                            onChange={(e) => {
-                                                setTranscript(
-                                                    (prev) =>
-                                                        prev && {
-                                                            ...prev,
-                                                            blocks: prev.blocks.map(
-                                                                (block) =>
-                                                                    block.id !==
-                                                                    currentBlock.id
-                                                                        ? block
-                                                                        : {
-                                                                              ...currentBlock,
-                                                                              text: e
-                                                                                  .target
-                                                                                  .value,
-                                                                          },
-                                                            ),
-                                                        },
-                                                );
-                                            }}
-                                            className="mx-auto flex w-full max-w-xl resize-none bg-white py-4 text-sm text-slate-900 focus:outline-none disabled:text-opacity-50"
-                                        />
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                        {/* Track Players */}
-                        <Player ref={playerRef} />
-
-                        {/* Tools */}
-                        <div className="flex justify-center bg-white p-2">
-                            <Button
-                                title="Add Segment"
-                                variant="outline"
-                                onClick={() => {
-                                    // Add a new region in the player
-                                    const newRegion = regionsPlugin.addRegion({
-                                        start: currentTime,
-                                        end: currentTime + 5,
-                                        resize: true,
-                                        drag: true,
-                                    });
-                                    // Add a new block in the transcript
-                                    setTranscript(
-                                        (prev) =>
-                                            prev && {
-                                                ...prev,
-                                                blocks: [
-                                                    ...prev.blocks,
-                                                    {
-                                                        id: newRegion.id,
-                                                        // TODO: use ms timestamps
-                                                        from: newRegion.start,
-                                                        to: newRegion.end,
-                                                        text: "",
-                                                        source: "system" as const,
+                                    <TextareaAutosize
+                                        key={currentBlock.id}
+                                        minRows={1}
+                                        name="transcription"
+                                        disabled={
+                                            currentBlock.id !== activeBlockId
+                                        }
+                                        autoFocus={
+                                            currentBlock.id === activeBlockId
+                                        }
+                                        placeholder="…"
+                                        defaultValue={currentBlock.text}
+                                        onChange={(e) => {
+                                            setTranscript(
+                                                (prev) =>
+                                                    prev && {
+                                                        ...prev,
+                                                        blocks: prev.blocks.map(
+                                                            (block) =>
+                                                                block.id !==
+                                                                currentBlock.id
+                                                                    ? block
+                                                                    : {
+                                                                          ...currentBlock,
+                                                                          text: e
+                                                                              .target
+                                                                              .value,
+                                                                      },
+                                                        ),
                                                     },
-                                                ].sort(
-                                                    (a, b) => a.from - b.from,
-                                                ),
-                                            },
-                                    );
-                                    setActiveBlockId(newRegion.id);
-                                }}
-                                className="rounded-full"
-                            >
-                                <Icons.Plus width={16} />
-                                &nbsp;
-                                <span className="text-xs">Add Segment</span>
-                            </Button>
+                                            );
+                                        }}
+                                        className="mx-auto flex w-full max-w-xl resize-none bg-white py-4 text-sm text-slate-900 focus:outline-none disabled:text-opacity-50"
+                                    />
+                                </div>
+                            ))}
                         </div>
+                    </div>
+                    {/* Track Players */}
+                    <Player ref={playerRef} />
 
-                        {/* Controls */}
-                        <Controls
-                            currentTime={currentTime}
-                            duration={wavesurfer?.getDuration() || 0}
-                            isPlaying={isPlaying}
-                            onChange={(kv) => {
-                                if (kv["playbackSpeed"]) {
-                                    wavesurfer?.setOptions({
-                                        audioRate: kv["playbackSpeed"],
-                                    });
-                                }
-                                if (kv["time"]) {
-                                    wavesurfer?.setTime(kv["time"]);
-                                }
-                                if (kv["zoom"]) {
-                                    wavesurfer?.zoom(kv["zoom"]);
-                                }
+                    {/* Tools */}
+                    <div className="flex justify-center bg-white p-2">
+                        <Button
+                            title="Add Segment"
+                            variant="outline"
+                            disabled={!track?.audio || !transcript}
+                            onClick={() => {
+                                if (!track?.audio || !transcript) return;
+                                // Add a new region in the player
+                                const newRegion = regionsPlugin.addRegion({
+                                    start: currentTime,
+                                    end: currentTime + 5,
+                                    resize: true,
+                                    drag: true,
+                                });
+                                // Add a new block in the transcript
+                                setTranscript(
+                                    (prev) =>
+                                        prev && {
+                                            ...prev,
+                                            blocks: [
+                                                ...prev.blocks,
+                                                {
+                                                    id: newRegion.id,
+                                                    // TODO: use ms timestamps
+                                                    from: newRegion.start,
+                                                    to: newRegion.end,
+                                                    text: "",
+                                                    source: "system" as const,
+                                                },
+                                            ].sort((a, b) => a.from - b.from),
+                                        },
+                                );
+                                setActiveBlockId(newRegion.id);
                             }}
-                            onPlayPause={() => {
-                                wavesurfer?.playPause();
-                            }}
-                            onSkip={(step) => {
-                                wavesurfer?.skip(step);
-                            }}
-                        />
+                            className="rounded-full"
+                        >
+                            <Icons.Plus width={16} />
+                            &nbsp;
+                            <span className="text-xs">Add Segment</span>
+                        </Button>
                     </div>
 
-                    {/* Segments Menu */}
-                    <SegmentsMenu
-                        blocks={transcript.blocks.map((block) => {
+                    {/* Controls */}
+                    <Controls
+                        currentTime={currentTime}
+                        duration={wavesurfer?.getDuration() || 0}
+                        isPlaying={isPlaying}
+                        onChange={(kv) => {
+                            if (kv["playbackSpeed"]) {
+                                wavesurfer?.setOptions({
+                                    audioRate: kv["playbackSpeed"],
+                                });
+                            }
+                            if (kv["time"]) {
+                                wavesurfer?.setTime(kv["time"]);
+                            }
+                            if (kv["zoom"]) {
+                                wavesurfer?.zoom(kv["zoom"]);
+                            }
+                        }}
+                        onPlayPause={() => {
+                            wavesurfer?.playPause();
+                        }}
+                        onSkip={(step) => {
+                            wavesurfer?.skip(step);
+                        }}
+                    />
+                </div>
+
+                {/* Segments Menu */}
+                <SegmentsMenu
+                    blocks={
+                        transcript?.blocks.map((block) => {
                             // FIXME: refactor to not always get all the regions
                             const regions = regionsPlugin.getRegions();
                             return {
                                 ...block,
                                 region: regions.find((r) => r.id === block.id),
                             };
-                        })}
-                        onBlockChange={(newBlock) => {
-                            setTranscript(
-                                (prev) =>
-                                    prev && {
-                                        ...prev,
-                                        blocks: prev.blocks.map((block) => {
-                                            if (block.id === activeBlockId)
-                                                return newBlock;
-                                            return block;
-                                        }),
-                                    },
-                            );
-                        }}
-                        onBlockDelete={(blockId) => {
-                            // Remove block from transcript
-                            setTranscript(
-                                (prev) =>
-                                    prev && {
-                                        ...prev,
-                                        blocks: prev.blocks.filter(
-                                            (block) => block.id !== blockId,
-                                        ),
-                                    },
-                            );
-                            // Remove region from player
-                            regionsPlugin
-                                .getRegions()
-                                .find((r) => r.id === blockId)
-                                ?.remove();
-                        }}
-                    />
-                </div>
+                        }) ?? []
+                    }
+                    onBlockChange={(newBlock) => {
+                        setTranscript(
+                            (prev) =>
+                                prev && {
+                                    ...prev,
+                                    blocks: prev.blocks.map((block) => {
+                                        if (block.id === activeBlockId)
+                                            return newBlock;
+                                        return block;
+                                    }),
+                                },
+                        );
+                    }}
+                    onBlockDelete={(blockId) => {
+                        // Remove block from transcript
+                        setTranscript(
+                            (prev) =>
+                                prev && {
+                                    ...prev,
+                                    blocks: prev.blocks.filter(
+                                        (block) => block.id !== blockId,
+                                    ),
+                                },
+                        );
+                        // Remove region from player
+                        regionsPlugin
+                            .getRegions()
+                            .find((r) => r.id === blockId)
+                            ?.remove();
+                    }}
+                />
             </div>
-        );
-    }
-
-    // Onboarding Form
-    return (
-        <main className="flex h-screen flex-col">
-            <header className="absolute inset-x-0 top-0 mx-auto max-w-xs p-4">
-                <nav className="mx-auto flex w-max items-center space-x-1 rounded-md border bg-white/0 p-0.5 shadow-sm backdrop-blur-sm">
-                    <Button variant="ghost" size="icon" className="relative">
-                        <Icons.FolderOpen width={16} strokeWidth={2} />
-                        <input
-                            className="absolute inset-0 opacity-0"
-                            type="file"
-                            name="audio_files"
-                            id="audio_files"
-                            accept=".wav"
-                            onChange={(e) => {
-                                onUpload(e);
-                            }}
-                        />
-                    </Button>
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => {
-                            // TODO: reset the transcript object
-                            // TODO: make sure to first open an alert box to confirm
-                            // TODO: trigger a toast once done
-                        }}
-                    >
-                        <Icons.Eraser width={16} strokeWidth={2} />
-                    </Button>
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => {
-                            // TODO: move the export logic here
-                            // this will require a global store to access the transcript object from here
-                        }}
-                    >
-                        <Icons.HardDriveDownload width={16} strokeWidth={2} />
-                    </Button>
-                </nav>
-            </header>
-        </main>
+        </div>
     );
 }

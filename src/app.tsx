@@ -201,7 +201,7 @@ export default function App() {
                     />
                 </div>
                 <div className="flex justify-end px-4 py-2">
-                    <div className="flex items-stretch divide-x divide-stone-200 overflow-hidden rounded-md border border-stone-200 bg-white">
+                    <div className="flex items-stretch divide-x divide-stone-200 overflow-hidden rounded-md border border-stone-200 bg-white focus-within:border-amber-400 focus-within:outline focus-within:outline-2 focus-within:outline-orange-300/20">
                         <button
                             disabled={!transcript}
                             onClick={() => {
@@ -240,7 +240,7 @@ export default function App() {
                                 document.body.removeChild(a);
                                 URL.revokeObjectURL(url);
                             }}
-                            className="cursor-default px-3 py-1.5 text-xs font-medium text-stone-800"
+                            className="cursor-default px-3 py-1.5 text-xs font-medium text-stone-800 focus:bg-amber-100/50 focus:text-amber-950"
                         >
                             <span>Export</span>
                         </button>
@@ -366,7 +366,7 @@ export default function App() {
                             {transcript?.blocks.map((currentBlock) => (
                                 <div
                                     key={currentBlock.id}
-                                    className="relative rounded-md outline -outline-offset-1 outline-transparent ring-4 ring-transparent hover:outline-amber-400 hover:ring-amber-200/70"
+                                    className="relative rounded-md outline outline-1 -outline-offset-1 outline-transparent ring-2 ring-transparent hover:outline-amber-400 hover:ring-orange-300/20"
                                 >
                                     <TextareaAutosize
                                         key={currentBlock.id}

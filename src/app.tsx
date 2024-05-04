@@ -177,12 +177,9 @@ export default function App() {
     return (
         <div className="flex h-screen flex-col overflow-hidden bg-stone-50">
             <header className="grid grid-cols-3 border-b bg-white">
-                <div className="">
-                    <button className="relative h-full cursor-default p-3 hover:bg-stone-100">
-                        <Icons.FileAudio2
-                            size={18}
-                            className="text-stone-700"
-                        />
+                <div className="flex items-center px-4 py-2">
+                    <button className="relative cursor-default rounded-md border border-stone-200 px-4 py-1.5 text-xs font-medium text-stone-800 hover:bg-stone-200/20 active:border-amber-400 active:ring-2 active:ring-amber-200/50">
+                        Import audio
                         <input
                             className="absolute inset-0 opacity-0"
                             type="file"
@@ -274,9 +271,12 @@ export default function App() {
                                     "The transcript was copied to your clipboard.",
                                 );
                             }}
-                            className="cursor-default p-1.5"
+                            className="cursor-default p-1.5 focus:bg-amber-100/50"
                         >
-                            <Icons.Copy size={14} className="text-stone-700" />
+                            <Icons.Clipboard
+                                size={14}
+                                className="text-stone-700"
+                            />
                         </button>
                     </div>
                 </div>
@@ -453,7 +453,7 @@ export default function App() {
                             }}
                             className="rounded-full"
                         >
-                            <Icons.Plus width={16} />
+                            <Icons.Plus size={16} />
                             &nbsp;
                             <span className="text-xs">Add Segment</span>
                         </Button>

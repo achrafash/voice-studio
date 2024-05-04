@@ -84,7 +84,7 @@ export default function Controls(props: ControlsProps) {
                     className="rounded-full"
                     onClick={() => props.onSkip(-skipStep)}
                 >
-                    <Icons.SkipBack width={16} />
+                    <Icons.Backward size={16} />
                 </Button>
                 <Button
                     variant="ghost"
@@ -93,9 +93,9 @@ export default function Controls(props: ControlsProps) {
                     onClick={() => props.onPlayPause()}
                 >
                     {props.isPlaying ? (
-                        <Icons.Pause width={16} />
+                        <Icons.Stop size={16} />
                     ) : (
-                        <Icons.Play width={16} />
+                        <Icons.Play size={16} />
                     )}
                 </Button>
                 <Button
@@ -104,7 +104,7 @@ export default function Controls(props: ControlsProps) {
                     className="rounded-full"
                     onClick={() => props.onSkip(skipStep)}
                 >
-                    <Icons.SkipForward width={16} />
+                    <Icons.Forward size={16} />
                 </Button>
             </div>
 

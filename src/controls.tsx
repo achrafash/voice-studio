@@ -58,7 +58,7 @@ export default function Controls(props: ControlsProps) {
                         <SelectItem value={"2"}>2.0</SelectItem>
                     </SelectContent>
                 </Select>
-                <div className="flex h-full w-full items-center space-x-2 rounded-full bg-white px-3 py-1 text-xs text-slate-500 hover:bg-slate-100/50">
+                <div className="flex h-full w-full items-center space-x-2 rounded-full border border-stone-200 bg-white px-3 py-1 text-xs text-stone-500 hover:bg-stone-100/50">
                     <button>-</button>
                     <Slider
                         name="zoom"
@@ -108,7 +108,7 @@ export default function Controls(props: ControlsProps) {
                 </Button>
             </div>
 
-            <div className="ml-auto flex h-full items-center space-x-2 rounded-full border border-slate-200 bg-white px-3 font-mono text-xs text-slate-600">
+            <div className="ml-auto flex h-full items-center space-x-2 rounded-full border border-stone-200 bg-white px-3 font-mono text-xs text-stone-600">
                 <input
                     type="text"
                     className="w-[3rem] focus:outline-none"
@@ -117,7 +117,7 @@ export default function Controls(props: ControlsProps) {
                         props.onChange({ time: Number(e.target.value) });
                     }}
                 />
-                <span className="text-slate-300">/</span>
+                <span className="text-stone-300">/</span>
                 <span className="">{props.duration.toFixed(2)}</span>
             </div>
         </div>

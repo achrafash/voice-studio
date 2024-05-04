@@ -66,8 +66,8 @@ export default function App() {
     const { wavesurfer, isPlaying, currentTime } = useWavesurfer({
         url: track?.audio,
         container: playerRef,
-        waveColor: "#9ca3af",
-        progressColor: "#fb923c",
+        waveColor: "#e7e5e4",
+        progressColor: "#f59e0b",
         dragToSeek: true,
         interact: true,
         normalize: true,
@@ -76,7 +76,8 @@ export default function App() {
         barRadius: 2,
         height: 120,
         autoCenter: true,
-        cursorColor: "#c2410c",
+        cursorColor: "#dc2626",
+        cursorWidth: 1.5,
         minPxPerSec: 10,
         plugins: useMemo(() => {
             return [
@@ -87,11 +88,12 @@ export default function App() {
                 }),
                 new MinimapPlugin({
                     cursorWidth: 0,
-                    waveColor: "#cbd5e1",
+                    waveColor: "#e7e5e4",
                     overlayColor: "transparent",
-                    progressColor: "#0f172a",
+                    progressColor: "#292524",
                     barGap: 0,
-                    barWidth: 1,
+                    barWidth: 1.5,
+                    barAlign: "bottom",
                     // TODO: provide a container to put it where I want
                 }),
             ];
@@ -174,13 +176,13 @@ export default function App() {
     }
 
     return (
-        <div className="flex h-screen flex-col overflow-hidden bg-slate-50">
+        <div className="flex h-screen flex-col overflow-hidden bg-stone-50">
             <header className="grid grid-cols-3 border-b bg-white">
                 <div className="">
-                    <button className="relative h-full cursor-default p-3 hover:bg-slate-100">
+                    <button className="relative h-full cursor-default p-3 hover:bg-stone-100">
                         <Icons.FileAudio2
                             size={18}
-                            className="text-slate-700"
+                            className="text-stone-700"
                         />
                         <input
                             className="absolute inset-0 opacity-0"
@@ -195,15 +197,15 @@ export default function App() {
                     </button>
                 </div>
                 <div className="flex items-center justify-center space-x-1 p-2 text-xs">
-                    <span className="text-slate-500">Drafts</span>
-                    <span className="text-slate-500">/</span>
+                    <span className="text-stone-500">Drafts</span>
+                    <span className="text-stone-500">/</span>
                     <input
                         placeholder="Untitled"
-                        className="w-full text-xs focus:outline-none"
+                        className="text-xs text-stone-800 focus:outline-none"
                     />
                 </div>
                 <div className="flex justify-end px-4 py-2">
-                    <div className="flex items-stretch divide-x divide-indigo-400 overflow-hidden rounded-md border-2 border-indigo-300 bg-indigo-500 text-indigo-50">
+                    <div className="flex items-stretch divide-x divide-stone-200 overflow-hidden rounded-md border border-stone-200 bg-white">
                         <button
                             disabled={!transcript}
                             onClick={() => {
@@ -242,7 +244,7 @@ export default function App() {
                                 document.body.removeChild(a);
                                 URL.revokeObjectURL(url);
                             }}
-                            className="cursor-default px-3 py-1.5 text-xs font-medium"
+                            className="cursor-default px-3 py-1.5 text-xs font-medium text-stone-800"
                         >
                             <span>Export</span>
                         </button>
@@ -273,19 +275,19 @@ export default function App() {
                                     "The transcript was copied to your clipboard.",
                                 );
                             }}
-                            className="cursor-default px-3 py-1.5 text-xs font-medium"
+                            className="cursor-default p-1.5"
                         >
-                            Copy
+                            <Icons.Copy size={14} className="text-stone-700" />
                         </button>
                     </div>
                 </div>
             </header>
             <div className="flex h-full flex-1 items-stretch overflow-hidden">
                 {/* Main Area */}
-                <div className="flex h-full flex-grow flex-col divide-y overflow-hidden">
+                <div className="flex flex-grow flex-col divide-y overflow-hidden">
                     {/* Transcription Area */}
                     <div className="flex-1 overflow-y-auto">
-                        <div className="relative mx-auto h-full w-full max-w-2xl space-y-0.5 divide-y divide-slate-50 border-x bg-white py-8">
+                        <div className="relative mx-auto min-h-full w-full max-w-2xl space-y-0.5 divide-y divide-stone-50 border-x bg-white py-8">
                             {transcript?.blocks?.length === 0 && (
                                 <div className="absolute inset-0 mx-auto flex w-max flex-col justify-center space-y-2 text-sm">
                                     <Label htmlFor="transcript">
@@ -365,11 +367,8 @@ export default function App() {
                             {transcript?.blocks.map((currentBlock) => (
                                 <div
                                     key={currentBlock.id}
-                                    className="relative px-8 outline -outline-offset-1 outline-transparent hover:outline-indigo-500"
+                                    className="relative rounded-md outline -outline-offset-1 outline-transparent ring-4 ring-transparent hover:outline-amber-400 hover:ring-amber-200/70"
                                 >
-                                    {/* <div className="absolute right-0 top-0 m-2 rounded border bg-slate-100 px-2 py-0.5 text-xs">
-                                        speaker #0
-                                    </div> */}
                                     <TextareaAutosize
                                         key={currentBlock.id}
                                         minRows={1}
@@ -402,7 +401,7 @@ export default function App() {
                                                     },
                                             );
                                         }}
-                                        className="mx-auto flex w-full max-w-xl resize-none bg-white py-4 text-sm text-slate-900 focus:outline-none disabled:text-opacity-50"
+                                        className="mx-auto flex w-full max-w-xl resize-none bg-white px-4 py-3 text-sm text-stone-900 focus:outline-none disabled:text-opacity-50"
                                     />
                                 </div>
                             ))}

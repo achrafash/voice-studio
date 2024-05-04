@@ -81,6 +81,6 @@
     }
 
     #waveform ::part(region) {
-        @apply rounded border border-solid border-gray-200 bg-gray-200/30 !important;
+        @apply rounded border border-solid border-amber-400 bg-amber-200/10 !important;
     }
 }

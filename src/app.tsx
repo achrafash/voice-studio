@@ -366,8 +366,39 @@ export default function App() {
                             {transcript?.blocks.map((currentBlock) => (
                                 <div
                                     key={currentBlock.id}
-                                    className="relative rounded-md outline outline-1 -outline-offset-1 outline-transparent ring-2 ring-transparent hover:outline-amber-400 hover:ring-orange-300/20"
+                                    className="group relative rounded outline outline-1 -outline-offset-1 outline-transparent ring-2 ring-transparent focus-within:outline-amber-400 focus-within:ring-orange-300/20 hover:outline-amber-400 hover:ring-orange-300/20"
                                 >
+                                    <div className="absolute right-0 top-0">
+                                        <input
+                                            type="text"
+                                            name="speaker"
+                                            className="invisible mr-2 max-w-[10ch] -translate-y-2/3 rounded-sm border border-neutral-100 px-1 py-0.5 text-xs text-neutral-800 shadow-sm ring-orange-300/20 focus:visible focus:border-amber-400 focus:outline-none focus:ring-2 group-hover:visible"
+                                            defaultValue={
+                                                currentBlock.speaker_id
+                                            }
+                                            onChange={(e) => {
+                                                setTranscript(
+                                                    (prev) =>
+                                                        prev && {
+                                                            ...prev,
+                                                            blocks: prev.blocks.map(
+                                                                (block) =>
+                                                                    block.id !==
+                                                                    currentBlock.id
+                                                                        ? block
+                                                                        : {
+                                                                              ...currentBlock,
+                                                                              speaker_id:
+                                                                                  e
+                                                                                      .target
+                                                                                      .value,
+                                                                          },
+                                                            ),
+                                                        },
+                                                );
+                                            }}
+                                        />
+                                    </div>
                                     <TextareaAutosize
                                         key={currentBlock.id}
                                         minRows={1}

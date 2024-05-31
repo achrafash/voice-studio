@@ -77,7 +77,7 @@
 
 @layer utilities {
     #waveform ::part(region-handle) {
-        @apply w-1.5 border-none bg-amber-400/0 transition-all duration-300 hover:bg-amber-400/50;
+        @apply w-[min(10%,4px)] overflow-visible rounded-none border-none bg-amber-500/0 transition-all duration-300 hover:bg-amber-500/20;
     }
 
     #waveform ::part(cursor) {
@@ -85,6 +85,9 @@
     }
 
     #waveform ::part(region) {
-        @apply overflow-hidden rounded-xl border border-solid border-amber-400 bg-amber-200/10 outline outline-orange-300/20 !important;
+        @apply overflow-hidden rounded-b-none rounded-t-sm border border-b-4 border-solid border-amber-500/5 bg-amber-500/10 !important;
+    }
+    #waveform ::part(region):hover {
+        @apply border-x border-t border-amber-500/30 bg-amber-400/30 outline outline-orange-300/20 !important;
     }
 }

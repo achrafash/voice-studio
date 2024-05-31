@@ -12,11 +12,10 @@ export default function SegmentsMenu(props: SegmentsMenuProps) {
     return (
         <nav className="flex w-[calc(min(15rem,25vw))] flex-shrink-0 flex-col divide-y overflow-y-auto border-l bg-white">
             <div className="flex items-center space-x-2 px-4 py-2">
-                <Icons.FlipHorizontal size={14} className="text-slate-800" />
                 <span className="text-sm font-medium">Segments</span>
             </div>
 
-            <div className="flex-1 divide-y divide-slate-100">
+            <div className="flex-1 divide-y divide-stone-100">
                 {props.blocks.map((block) => {
                     let isLocked = !block.region?.drag;
                     return (
@@ -25,13 +24,7 @@ export default function SegmentsMenu(props: SegmentsMenuProps) {
                             className="flex space-x-2 px-4 py-2"
                         >
                             <div className="grid grid-cols-2 gap-0.5">
-                                <div className="flex items-center border border-white outline-blue-500 focus-within:border-slate-200 focus-within:outline hover:border-slate-200">
-                                    <div className="p-1">
-                                        <Icons.PanelLeftDashed
-                                            size={16}
-                                            className="text-slate-300"
-                                        />
-                                    </div>
+                                <div className="flex items-center border border-white outline-blue-500 focus-within:border-stone-200 focus-within:outline hover:border-stone-200">
                                     <input
                                         className="w-full flex-1 py-1.5 pl-1 pr-0 text-xs focus:outline-none"
                                         type="text"
@@ -52,7 +45,7 @@ export default function SegmentsMenu(props: SegmentsMenuProps) {
                                         }}
                                     />
                                 </div>
-                                <div className="flex items-center border border-white outline-blue-500 focus-within:border-slate-200 focus-within:outline hover:border-slate-200">
+                                <div className="flex items-center border border-white outline-blue-500 focus-within:border-stone-200 focus-within:outline hover:border-stone-200">
                                     <input
                                         className="w-full flex-1 py-1.5 pl-2 pr-0 text-xs focus:outline-none"
                                         type="text"
@@ -73,12 +66,6 @@ export default function SegmentsMenu(props: SegmentsMenuProps) {
                                             });
                                         }}
                                     />
-                                    <div className="p-1">
-                                        <Icons.PanelRightDashed
-                                            size={16}
-                                            className="text-slate-300"
-                                        />
-                                    </div>
                                 </div>
                             </div>
                             <div className="flex items-center space-x-1">
@@ -87,11 +74,11 @@ export default function SegmentsMenu(props: SegmentsMenuProps) {
                                         if (!block.region) return;
                                         block.region.play();
                                     }}
-                                    className="group rounded p-2 hover:bg-slate-100"
+                                    className="group rounded p-2 hover:bg-stone-100"
                                 >
                                     <Icons.Play
                                         size={16}
-                                        className="text-slate-300 group-hover:text-slate-500"
+                                        className="text-stone-300 group-hover:text-stone-500"
                                     />
                                 </button>
                                 <button
@@ -110,17 +97,17 @@ export default function SegmentsMenu(props: SegmentsMenuProps) {
                                             isLocked = true;
                                         }
                                     }}
-                                    className="group rounded p-2 hover:bg-slate-100"
+                                    className="group rounded p-2 hover:bg-stone-100"
                                 >
                                     {isLocked ? (
-                                        <Icons.Unlock
-                                            size={16}
-                                            className="text-slate-300 group-hover:text-slate-500"
-                                        />
-                                    ) : (
                                         <Icons.Lock
                                             size={16}
-                                            className="text-slate-300 group-hover:text-slate-500"
+                                            className="text-stone-300 group-hover:text-stone-500"
+                                        />
+                                    ) : (
+                                        <Icons.Unlock
+                                            size={16}
+                                            className="text-stone-300 group-hover:text-stone-500"
                                         />
                                     )}
                                 </button>
@@ -128,11 +115,11 @@ export default function SegmentsMenu(props: SegmentsMenuProps) {
                                     onClick={() => {
                                         props.onBlockDelete(block.id);
                                     }}
-                                    className="group rounded p-2 hover:bg-slate-100"
+                                    className="group rounded p-2 hover:bg-stone-100"
                                 >
                                     <Icons.Trash
                                         size={16}
-                                        className="text-slate-300 group-hover:text-slate-500"
+                                        className="text-stone-300 group-hover:text-stone-500"
                                     />
                                 </button>
                             </div>

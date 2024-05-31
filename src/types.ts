@@ -4,5 +4,5 @@ export type Block = {
     to: number;
     text: string;
     source: "mic" | "system";
-    speaker_id?: number;
+    speaker_id?: any;
 };

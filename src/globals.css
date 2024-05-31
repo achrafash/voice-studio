@@ -77,10 +77,14 @@
 
 @layer utilities {
     #waveform ::part(region-handle) {
-        @apply rounded-none border-none !important;
+        @apply w-1.5 border-none bg-amber-400/0 transition-all duration-300 hover:bg-amber-400/50;
+    }
+
+    #waveform ::part(cursor) {
+        @apply border border-solid border-stone-100;
     }
 
     #waveform ::part(region) {
-        @apply rounded border border-solid border-gray-200 bg-gray-200/30 !important;
+        @apply overflow-hidden rounded-xl border border-solid border-amber-400 bg-amber-200/10 outline outline-orange-300/20 !important;
     }
 }

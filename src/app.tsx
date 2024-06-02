@@ -509,50 +509,6 @@ export default function App() {
                         }}
                     />
                 </div>
-
-                {/* Segments Menu */}
-                <SegmentsMenu
-                    blocks={
-                        transcript?.blocks.map((block) => {
-                            // FIXME: refactor to not always get all the regions
-                            const regions = regionsPlugin.getRegions();
-                            return {
-                                ...block,
-                                region: regions.find((r) => r.id === block.id),
-                            };
-                        }) ?? []
-                    }
-                    onBlockChange={(newBlock) => {
-                        setTranscript(
-                            (prev) =>
-                                prev && {
-                                    ...prev,
-                                    blocks: prev.blocks.map((block) => {
-                                        if (block.id === activeBlockId)
-                                            return newBlock;
-                                        return block;
-                                    }),
-                                },
-                        );
-                    }}
-                    onBlockDelete={(blockId) => {
-                        // Remove block from transcript
-                        setTranscript(
-                            (prev) =>
-                                prev && {
-                                    ...prev,
-                                    blocks: prev.blocks.filter(
-                                        (block) => block.id !== blockId,
-                                    ),
-                                },
-                        );
-                        // Remove region from player
-                        regionsPlugin
-                            .getRegions()
-                            .find((r) => r.id === blockId)
-                            ?.remove();
-                    }}
-                />
             </div>
         </div>
     );

@@ -403,12 +403,6 @@ export default function App() {
                                         key={currentBlock.id}
                                         minRows={1}
                                         name="transcription"
-                                        disabled={
-                                            currentBlock.id !== activeBlockId
-                                        }
-                                        autoFocus={
-                                            currentBlock.id === activeBlockId
-                                        }
                                         defaultValue={currentBlock.text}
                                         onChange={(e) => {
                                             setTranscript(
@@ -430,7 +424,7 @@ export default function App() {
                                                     },
                                             );
                                         }}
-                                        className="mx-auto flex w-full max-w-2xl resize-none rounded-lg bg-white pb-5 pl-6 pr-8 pt-4 text-sm text-stone-800 focus:outline-none disabled:text-opacity-50"
+                                        className={`mx-auto flex w-full max-w-2xl resize-none rounded-lg bg-white pb-5 pl-6 pr-8 pt-4 text-sm text-stone-800 focus:outline-none ${activeBlockId === currentBlock.id ? "text-opacity-100" : "text-opacity-50"}`}
                                     />
                                 </div>
                             ))}

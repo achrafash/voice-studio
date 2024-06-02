@@ -368,11 +368,11 @@ export default function App() {
                                     key={currentBlock.id}
                                     className="group relative rounded outline outline-1 -outline-offset-1 outline-transparent ring-2 ring-transparent focus-within:outline-amber-400 focus-within:ring-orange-300/20 hover:outline-amber-400 hover:ring-orange-300/20"
                                 >
-                                    <div className="absolute right-0 top-0">
+                                    <div className="absolute left-2 top-0">
                                         <input
                                             type="text"
                                             name="speaker"
-                                            className="invisible mr-2 max-w-[10ch] -translate-y-2/3 rounded-sm border border-neutral-100 px-1 py-0.5 text-xs text-neutral-800 shadow-sm ring-orange-300/20 focus:visible focus:border-amber-400 focus:outline-none focus:ring-2 group-hover:visible"
+                                            className="max-w-[10ch] -translate-y-2/3 rounded-sm border border-stone-50 bg-white/50 px-1 py-0.5 text-xs text-stone-400 ring-orange-300/20 backdrop-blur-[2px] focus:visible focus:border-amber-400 focus:text-stone-600 focus:outline-none focus:ring-2"
                                             defaultValue={
                                                 currentBlock.speaker_id
                                             }
@@ -409,7 +409,6 @@ export default function App() {
                                         autoFocus={
                                             currentBlock.id === activeBlockId
                                         }
-                                        placeholder="…"
                                         defaultValue={currentBlock.text}
                                         onChange={(e) => {
                                             setTranscript(
@@ -431,7 +430,7 @@ export default function App() {
                                                     },
                                             );
                                         }}
-                                        className="mx-auto flex w-full max-w-2xl resize-none rounded-lg bg-white px-8 py-3 text-sm text-stone-800 focus:outline-none disabled:text-opacity-50"
+                                        className="mx-auto flex w-full max-w-2xl resize-none rounded-lg bg-white pb-5 pl-6 pr-8 pt-4 text-sm text-stone-800 focus:outline-none disabled:text-opacity-50"
                                     />
                                 </div>
                             ))}

@@ -128,25 +128,34 @@ export default function App() {
                 });
             }
         });
+        function enableCreateBlockOnDrag(e: KeyboardEvent) {
+            if (!e.altKey) return;
+            wavesurfer?.setOptions({ dragToSeek: false });
+            const disable = regionsPlugin.enableDragSelection({});
+            window.addEventListener("keyup", () => {
+                wavesurfer?.setOptions({ dragToSeek: true });
+                disable();
+            }),
+                { once: true };
+        }
+        window.addEventListener("keydown", enableCreateBlockOnDrag);
 
         return () => {
             unsubscribe();
+            window.removeEventListener("keydown", enableCreateBlockOnDrag);
         };
     }, [wavesurfer]);
 
     // Prevent losing data when accidentally leaving the page
     useEffect(() => {
         if (!transcript || transcript.blocks.length === 0) return;
-
         function preventLeaving(event: BeforeUnloadEvent) {
             event.preventDefault();
             return (event.returnValue = "");
         }
-
         window.addEventListener("beforeunload", preventLeaving, {
             capture: true,
         });
-
         return () => {
             window.removeEventListener("beforeunload", preventLeaving, {
                 capture: true,

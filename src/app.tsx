@@ -236,8 +236,48 @@ export default function App() {
             name: projectName,
             duration: endTime - startTime,
             audio: mergedAudioURL,
-            offset: startTime,
+            offset: startTime * 1_000,
         });
+    }
+
+    function loadTranscriptFromFile(file: File) {
+        if (!track) return;
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            const content = event.target?.result as string;
+            const data = JSON.parse(content);
+            let offset = 0;
+            if (data.startTime === 0) offset = track.offset;
+
+            const newTranscript = {
+                startTime: data.startTime + offset,
+                endTime: data.endTime + offset,
+                blocks: Array<Block>(),
+            };
+            console.log({ offset, blocks: data.blocks.slice(0, 3) });
+            for (const block of data.blocks) {
+                const region = regionsPlugin.addRegion({
+                    id: block.id,
+                    start:
+                        (block.from -
+                            (data.startTime === 0 ? 0 : track.offset)) /
+                        1_000,
+                    end:
+                        (block.to - (data.startTime === 0 ? 0 : track.offset)) /
+                        1_000,
+                });
+                newTranscript.blocks.push({
+                    ...block,
+                    id: block.id ?? region.id,
+                    from: block.from + offset,
+                    to: block.to + offset,
+                });
+            }
+            newTranscript.blocks.sort((a, b) => a.from - b.from);
+
+            setTranscript(newTranscript);
+        };
+        reader.readAsText(file);
     }
 
     return (
@@ -376,54 +416,7 @@ export default function App() {
                                                 file.type !== "application/json"
                                             )
                                                 return;
-                                            const reader = new FileReader();
-                                            reader.onload = (event) => {
-                                                const content = event.target
-                                                    ?.result as string;
-                                                try {
-                                                    const data =
-                                                        JSON.parse(content);
-
-                                                    // Convert timestamps ms -> sec
-                                                    data.startTime /= 1_000;
-                                                    data.endTime =
-                                                        data.endTime / 1_000 -
-                                                        data.startTime;
-                                                    data.blocks =
-                                                        data.blocks.map(
-                                                            (block: Block) => ({
-                                                                ...block,
-                                                                id:
-                                                                    block.id ||
-                                                                    window.crypto.randomUUID(),
-                                                                from:
-                                                                    block.from /
-                                                                        1_000 -
-                                                                    data.startTime,
-                                                                to:
-                                                                    block.to /
-                                                                        1_000 -
-                                                                    data.startTime,
-                                                            }),
-                                                        );
-
-                                                    setTranscript(data);
-                                                    data.blocks.map(
-                                                        (block: Block) => {
-                                                            regionsPlugin.addRegion(
-                                                                {
-                                                                    id: block.id,
-                                                                    start: block.from,
-                                                                    end: block.to,
-                                                                },
-                                                            );
-                                                        },
-                                                    );
-                                                } catch (error) {
-                                                    console.error(error);
-                                                }
-                                            };
-                                            reader.readAsText(file);
+                                            loadTranscriptFromFile(file);
                                         }}
                                     />
                                 </div>

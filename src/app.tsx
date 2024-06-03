@@ -81,10 +81,9 @@ export default function App() {
         url: track?.audio,
         container: playerRef,
         waveColor: "#e7e5e4",
-        progressColor: "#f59e0b",
+        progressColor: "#e7e5e4",
         dragToSeek: true,
         interact: true,
-        // normalize: true,
         barHeight: 0.8,
         barGap: 1.5,
         barWidth: 1.5,
@@ -99,8 +98,8 @@ export default function App() {
                 regionsPlugin,
                 new MinimapPlugin({
                     cursorWidth: 0,
-                    waveColor: "#e7e5e4",
                     overlayColor: "transparent",
+                    waveColor: "#e7e5e4",
                     progressColor: "#292524",
                     barGap: 0,
                     barWidth: 1.5,
@@ -380,8 +379,8 @@ export default function App() {
                     )}
 
                     {/* Editor */}
-                    <div className="col-span-3 max-w-xl overflow-y-auto xl:col-span-2 xl:max-w-3xl">
-                        <div className="relative mx-auto min-h-full w-full max-w-2xl space-y-0.5 divide-y divide-stone-50 border-x border-stone-200 bg-white py-8">
+                    <div className="col-span-3 flex max-w-xl flex-col overflow-y-auto border-x border-stone-200 bg-white xl:col-span-2 xl:max-w-3xl">
+                        <div className="relative w-full flex-1 space-y-0.5 divide-y divide-stone-50 py-8">
                             {transcript?.blocks?.length === 0 && (
                                 <div className="absolute inset-0 mx-auto flex w-max flex-col justify-center space-y-2 text-sm">
                                     <Label htmlFor="transcript">
@@ -524,6 +523,48 @@ export default function App() {
                                 </div>
                             ))}
                         </div>
+                        <footer className="w-full border-t border-stone-200 bg-stone-50 p-2">
+                            <button
+                                title="Create a new block"
+                                disabled={!track?.audio || !transcript}
+                                onClick={() => {
+                                    if (!track?.audio || !transcript) return;
+                                    // Add a new region in the player
+                                    const newRegion = regionsPlugin.addRegion({
+                                        start: currentTime,
+                                        end: currentTime + 5,
+                                        resize: true,
+                                        drag: true,
+                                    });
+                                    // Add a new block in the transcript
+                                    setTranscript(
+                                        (prev) =>
+                                            prev && {
+                                                ...prev,
+                                                blocks: [
+                                                    ...prev.blocks,
+                                                    {
+                                                        id: newRegion.id,
+                                                        // TODO: use ms timestamps
+                                                        from: newRegion.start,
+                                                        to: newRegion.end,
+                                                        text: "",
+                                                        source: "system" as const,
+                                                    },
+                                                ].sort(
+                                                    (a, b) => a.from - b.from,
+                                                ),
+                                            },
+                                    );
+                                    setActiveBlockId(newRegion.id);
+                                }}
+                                className="flex cursor-default items-center rounded-sm border border-stone-200 px-1.5 py-0.5 pr-2 text-stone-600"
+                            >
+                                <Icons.Plus size={12} />
+                                &nbsp;
+                                <span className="text-xs">new block</span>
+                            </button>
+                        </footer>
                     </div>
                 </div>
                 {/* Player */}
@@ -534,48 +575,6 @@ export default function App() {
                         ref={minimapRef}
                         className="overflow-hidden rounded-lg border border-stone-200/50"
                     />
-                </div>
-                {/* Tools */}
-                <div className="flex justify-center border-b border-stone-200 bg-white p-2">
-                    <Button
-                        title="Add Segment"
-                        variant="outline"
-                        disabled={!track?.audio || !transcript}
-                        onClick={() => {
-                            if (!track?.audio || !transcript) return;
-                            // Add a new region in the player
-                            const newRegion = regionsPlugin.addRegion({
-                                start: currentTime,
-                                end: currentTime + 5,
-                                resize: true,
-                                drag: true,
-                            });
-                            // Add a new block in the transcript
-                            setTranscript(
-                                (prev) =>
-                                    prev && {
-                                        ...prev,
-                                        blocks: [
-                                            ...prev.blocks,
-                                            {
-                                                id: newRegion.id,
-                                                // TODO: use ms timestamps
-                                                from: newRegion.start,
-                                                to: newRegion.end,
-                                                text: "",
-                                                source: "system" as const,
-                                            },
-                                        ].sort((a, b) => a.from - b.from),
-                                    },
-                            );
-                            setActiveBlockId(newRegion.id);
-                        }}
-                        className="rounded-full"
-                    >
-                        <Icons.Plus size={16} />
-                        &nbsp;
-                        <span className="text-xs">Add Segment</span>
-                    </Button>
                 </div>
                 {/* Controls */}
                 <Controls

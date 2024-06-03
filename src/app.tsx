@@ -56,6 +56,9 @@ export default function App() {
         regionsPlugin.on("region-out", (region) => {
             if (activeBlockId === region.id) setActiveBlockId(undefined);
         });
+        regionsPlugin.on("region-clicked", (region) => {
+            region.element.focus();
+        });
         regionsPlugin.on("region-created", (region) => {
             region.element.tabIndex = 0;
             createBlockFromRegion(region);
@@ -452,6 +455,7 @@ export default function App() {
                             {transcript?.blocks.map((currentBlock) => (
                                 <div
                                     key={currentBlock.id}
+                                    tabIndex={0}
                                     className="group relative rounded outline outline-1 -outline-offset-1 outline-transparent ring-2 ring-transparent focus-within:outline-amber-400 focus-within:ring-orange-300/20 hover:outline-amber-400 hover:ring-orange-300/20"
                                 >
                                     <div className="absolute left-2 top-0">

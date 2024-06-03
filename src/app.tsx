@@ -65,8 +65,8 @@ export default function App() {
 
                                 return {
                                     ...block,
-                                    from: region.start,
-                                    to: region.end,
+                                    from: region.start * 1_000 + prev.startTime,
+                                    to: region.end * 1_000 + prev.startTime,
                                 };
                             })
                             .sort((a, b) => a.from - b.from),
@@ -219,8 +219,8 @@ export default function App() {
 
         // Initialize transcript
         setTranscript({
-            startTime,
-            endTime,
+            startTime: startTime * 1_000,
+            endTime: endTime * 1_000,
             blocks: [],
         });
         setTrack({
@@ -266,28 +266,7 @@ export default function App() {
                             onClick={() => {
                                 if (!transcript) return;
                                 const blob = new Blob(
-                                    [
-                                        // Convert timestamps to ms
-                                        JSON.stringify(
-                                            {
-                                                startTime:
-                                                    transcript.startTime *
-                                                    1_000,
-                                                endTime:
-                                                    transcript.endTime * 1_000,
-                                                blocks: transcript.blocks.map(
-                                                    (block) => ({
-                                                        ...block,
-                                                        from:
-                                                            block.from * 1_000,
-                                                        to: block.to * 1_000,
-                                                    }),
-                                                ),
-                                            },
-                                            null,
-                                            4,
-                                        ),
-                                    ],
+                                    [JSON.stringify(transcript, null, 4)],
                                     { type: "application/json" },
                                 );
                                 const url = URL.createObjectURL(blob);
@@ -308,23 +287,7 @@ export default function App() {
                             onClick={async () => {
                                 if (!transcript) return;
                                 await navigator.clipboard.writeText(
-                                    // Convert timestamps to ms
-                                    JSON.stringify(
-                                        {
-                                            startTime:
-                                                transcript.startTime * 1_000,
-                                            endTime: transcript.endTime * 1_000,
-                                            blocks: transcript.blocks.map(
-                                                (block) => ({
-                                                    ...block,
-                                                    from: block.from * 1_000,
-                                                    to: block.to * 1_000,
-                                                }),
-                                            ),
-                                        },
-                                        null,
-                                        4,
-                                    ),
+                                    JSON.stringify(transcript, null, 4),
                                 );
                                 alert(
                                     "The transcript was copied to your clipboard.",
@@ -379,7 +342,7 @@ export default function App() {
                     )}
 
                     {/* Editor */}
-                    <div className="col-span-3 flex max-w-xl flex-col overflow-y-auto border-x border-stone-200 bg-white xl:col-span-2 xl:max-w-3xl">
+                    <div className="col-span-3 col-start-2 flex max-w-xl flex-col overflow-y-auto border-x border-stone-200 bg-white xl:col-span-2 xl:col-start-2 xl:max-w-3xl">
                         <div className="relative w-full flex-1 space-y-0.5 divide-y divide-stone-50 py-8">
                             {transcript?.blocks?.length === 0 && (
                                 <div className="absolute inset-0 mx-auto flex w-max flex-col justify-center space-y-2 text-sm">
@@ -546,8 +509,14 @@ export default function App() {
                                                     {
                                                         id: newRegion.id,
                                                         // TODO: use ms timestamps
-                                                        from: newRegion.start,
-                                                        to: newRegion.end,
+                                                        from:
+                                                            newRegion.start *
+                                                                1_000 +
+                                                            prev.startTime,
+                                                        to:
+                                                            newRegion.end *
+                                                                1_000 +
+                                                            prev.startTime,
                                                         text: "",
                                                         source: "system" as const,
                                                     },

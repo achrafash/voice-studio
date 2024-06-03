@@ -133,8 +133,8 @@ export default function App() {
                 transcript.blocks.forEach((block) => {
                     regionsPlugin.addRegion({
                         id: block.id,
-                        start: block.from,
-                        end: block.to,
+                        start: (block.from - transcript.startTime) / 1000,
+                        end: (block.to - transcript.startTime) / 1000,
                     });
                     console.log(`created region #${block.id}`);
                 });

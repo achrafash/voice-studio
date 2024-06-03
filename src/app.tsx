@@ -5,7 +5,7 @@ import MinimapPlugin from "wavesurfer.js/dist/plugins/minimap.esm.js";
 import RegionsPlugin from "wavesurfer.js/dist/plugins/regions.esm.js";
 
 import TextareaAutosize from "react-textarea-autosize";
-import { Button, Icons, Input, Label } from "@/components";
+import { Icons, Input, Label } from "@/components";
 
 import Controls from "./controls";
 import SegmentsMenu from "./segments-menu";
@@ -27,6 +27,16 @@ interface Track {
 export default function App() {
     const [transcript, setTranscript] = useState<Transcript>();
     const [track, setTrack] = useState<Track>();
+    const [files, setFiles] = useState<
+        {
+            name: string;
+            type: string;
+            startTime?: number;
+            endTime?: number;
+            source?: string;
+        }[]
+    >();
+    const [project, setProject] = useState<string>();
     const [activeBlockId, setActiveBlockId] = useState<string>();
 
     const playerRef = useRef(null);
@@ -283,10 +293,45 @@ export default function App() {
             </header>
             <div className="flex h-full flex-1 items-stretch overflow-hidden">
                 {/* Main Area */}
-                <div className="flex flex-grow flex-col divide-y overflow-hidden">
-                    {/* Transcription Area */}
+                <div className="relative flex flex-grow flex-col divide-y overflow-hidden">
+                    {/* File Explorer */}
+                    {files && (
+                        <div className="absolute inset-y-0 left-2 top-2 flex h-[50vh] max-w-[280px] overflow-y-hidden rounded-sm border border-stone-200 bg-white">
+                            <ul className="overflow-y-auto p-2">
+                                {files.map((file) => (
+                                    <li
+                                        key={file.name}
+                                        className="flex w-full cursor-default items-center space-x-1.5 rounded p-1.5 pr-4 hover:bg-stone-100/80"
+                                    >
+                                        {file.type === "audio/wav" ? (
+                                            <Icons.WavFile
+                                                size={14}
+                                                className="flex-shrink-0 text-stone-500"
+                                            />
+                                        ) : file.type === "application/json" ? (
+                                            <Icons.TranscriptFile
+                                                size={14}
+                                                className="flex-shrink-0 text-stone-500"
+                                                reference={
+                                                    file.name ===
+                                                    "groundTruth-transcript.json"
+                                                }
+                                            />
+                                        ) : (
+                                            <div className="h-4 w-4 rounded-sm border border-stone-200 bg-stone-50" />
+                                        )}
+                                        <span className="truncate text-xs text-stone-700">
+                                            {file.name}
+                                        </span>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
+
+                    {/* Editor */}
                     <div className="flex-1 overflow-y-auto">
-                        <div className="relative mx-auto min-h-full w-full max-w-2xl space-y-0.5 divide-y divide-stone-50 border-x bg-white py-8">
+                        <div className="relative mx-auto min-h-full w-full max-w-2xl space-y-0.5 divide-y divide-stone-50 border-x border-stone-200 bg-white py-8">
                             {transcript?.blocks?.length === 0 && (
                                 <div className="absolute inset-0 mx-auto flex w-max flex-col justify-center space-y-2 text-sm">
                                     <Label htmlFor="transcript">
@@ -430,7 +475,7 @@ export default function App() {
                             ))}
                         </div>
                     </div>
-                    {/* Track Players */}
+                    {/* Player */}
                     <div className="flex flex-col space-y-4 border-y border-stone-200 px-4 py-2">
                         <div id="waveform" ref={playerRef} />
                         <div

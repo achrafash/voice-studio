@@ -56,6 +56,9 @@ export default function App() {
         regionsPlugin.on("region-out", (region) => {
             if (activeBlockId === region.id) setActiveBlockId(undefined);
         });
+        regionsPlugin.on("region-double-clicked", (region) => {
+            region.play();
+        });
         regionsPlugin.on("region-clicked", (region) => {
             region.element.focus();
         });

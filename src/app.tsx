@@ -2,7 +2,9 @@ import { useEffect, useMemo, useRef, useState } from "react";
 // Wavesurfer
 import { useWavesurfer } from "@wavesurfer/react";
 import MinimapPlugin from "wavesurfer.js/dist/plugins/minimap.esm.js";
-import RegionsPlugin from "wavesurfer.js/dist/plugins/regions.esm.js";
+import RegionsPlugin, {
+    Region,
+} from "wavesurfer.js/dist/plugins/regions.esm.js";
 
 import TextareaAutosize from "react-textarea-autosize";
 import { Icons, Input, Label } from "@/components";
@@ -53,6 +55,10 @@ export default function App() {
         });
         regionsPlugin.on("region-out", (region) => {
             if (activeBlockId === region.id) setActiveBlockId(undefined);
+        });
+        regionsPlugin.on("region-created", (region) => {
+            region.element.tabIndex = 0;
+            createBlockFromRegion(region);
         });
         regionsPlugin.on("region-updated", (region) => {
             setTranscript(
@@ -280,6 +286,27 @@ export default function App() {
         reader.readAsText(file);
     }
 
+    function createBlockFromRegion(region: Region) {
+        // Add a new block in the transcript
+        setTranscript(
+            (prev) =>
+                prev && {
+                    ...prev,
+                    blocks: [
+                        ...prev.blocks,
+                        {
+                            id: region.id,
+                            from: region.start * 1_000 + prev.startTime,
+                            to: region.end * 1_000 + prev.startTime,
+                            text: "",
+                            source: "system" as const,
+                        },
+                    ].sort((a, b) => a.from - b.from),
+                },
+        );
+        setActiveBlockId(region.id);
+    }
+
     return (
         <div className="flex h-screen flex-col overflow-hidden bg-stone-50">
             <header className="grid grid-cols-3 border-b border-stone-200 bg-white">
@@ -493,41 +520,13 @@ export default function App() {
                                 title="Create a new block"
                                 disabled={!track?.audio || !transcript}
                                 onClick={() => {
-                                    if (!track?.audio || !transcript) return;
-                                    // Add a new region in the player
-                                    const newRegion = regionsPlugin.addRegion({
+                                    const region = regionsPlugin.addRegion({
                                         start: currentTime,
                                         end: currentTime + 5,
                                         resize: true,
                                         drag: true,
                                     });
-                                    // Add a new block in the transcript
-                                    setTranscript(
-                                        (prev) =>
-                                            prev && {
-                                                ...prev,
-                                                blocks: [
-                                                    ...prev.blocks,
-                                                    {
-                                                        id: newRegion.id,
-                                                        // TODO: use ms timestamps
-                                                        from:
-                                                            newRegion.start *
-                                                                1_000 +
-                                                            prev.startTime,
-                                                        to:
-                                                            newRegion.end *
-                                                                1_000 +
-                                                            prev.startTime,
-                                                        text: "",
-                                                        source: "system" as const,
-                                                    },
-                                                ].sort(
-                                                    (a, b) => a.from - b.from,
-                                                ),
-                                            },
-                                    );
-                                    setActiveBlockId(newRegion.id);
+                                    createBlockFromRegion(region);
                                 }}
                                 className="flex cursor-default items-center rounded-sm border border-stone-200 px-1.5 py-0.5 pr-2 text-stone-600"
                             >

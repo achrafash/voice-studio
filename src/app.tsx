@@ -341,13 +341,13 @@ export default function App() {
                     </div>
                 </div>
             </header>
-            <div className="flex h-full flex-1 items-stretch overflow-hidden">
-                {/* Main Area */}
-                <div className="relative flex flex-grow flex-col divide-y overflow-hidden">
+            {/* Main Area */}
+            <div className="flex h-full flex-grow flex-col overflow-hidden">
+                <div className="grid flex-1 grid-cols-4 gap-x-4 overflow-y-auto px-4">
                     {/* File Explorer */}
                     {files && (
-                        <div className="absolute inset-y-0 left-2 top-2 flex h-[50vh] max-w-[280px] overflow-y-hidden rounded-sm border border-stone-200 bg-white">
-                            <ul className="overflow-y-auto p-2">
+                        <div className="my-4 mr-0 flex max-w-[240px] overflow-hidden rounded-sm border border-stone-200 bg-white">
+                            <ul className="overflow-auto p-2">
                                 {files.map((file) => (
                                     <li
                                         key={file.name}
@@ -380,7 +380,7 @@ export default function App() {
                     )}
 
                     {/* Editor */}
-                    <div className="flex-1 overflow-y-auto">
+                    <div className="col-span-3 max-w-xl overflow-y-auto xl:col-span-2 xl:max-w-3xl">
                         <div className="relative mx-auto min-h-full w-full max-w-2xl space-y-0.5 divide-y divide-stone-50 border-x border-stone-200 bg-white py-8">
                             {transcript?.blocks?.length === 0 && (
                                 <div className="absolute inset-0 mx-auto flex w-max flex-col justify-center space-y-2 text-sm">
@@ -525,83 +525,83 @@ export default function App() {
                             ))}
                         </div>
                     </div>
-                    {/* Player */}
-                    <div className="flex flex-col space-y-4 border-y border-stone-200 px-4 py-2">
-                        <div id="waveform" ref={playerRef} />
-                        <div
-                            id="minimap"
-                            ref={minimapRef}
-                            className="overflow-hidden rounded-lg border border-stone-200/50"
-                        />
-                    </div>
-                    {/* Tools */}
-                    <div className="flex justify-center bg-white p-2">
-                        <Button
-                            title="Add Segment"
-                            variant="outline"
-                            disabled={!track?.audio || !transcript}
-                            onClick={() => {
-                                if (!track?.audio || !transcript) return;
-                                // Add a new region in the player
-                                const newRegion = regionsPlugin.addRegion({
-                                    start: currentTime,
-                                    end: currentTime + 5,
-                                    resize: true,
-                                    drag: true,
-                                });
-                                // Add a new block in the transcript
-                                setTranscript(
-                                    (prev) =>
-                                        prev && {
-                                            ...prev,
-                                            blocks: [
-                                                ...prev.blocks,
-                                                {
-                                                    id: newRegion.id,
-                                                    // TODO: use ms timestamps
-                                                    from: newRegion.start,
-                                                    to: newRegion.end,
-                                                    text: "",
-                                                    source: "system" as const,
-                                                },
-                                            ].sort((a, b) => a.from - b.from),
-                                        },
-                                );
-                                setActiveBlockId(newRegion.id);
-                            }}
-                            className="rounded-full"
-                        >
-                            <Icons.Plus size={16} />
-                            &nbsp;
-                            <span className="text-xs">Add Segment</span>
-                        </Button>
-                    </div>
-                    {/* Controls */}
-                    <Controls
-                        currentTime={currentTime}
-                        duration={wavesurfer?.getDuration() || 0}
-                        isPlaying={isPlaying}
-                        onChange={(kv) => {
-                            if (kv["playbackSpeed"]) {
-                                wavesurfer?.setOptions({
-                                    audioRate: kv["playbackSpeed"],
-                                });
-                            }
-                            if (kv["time"]) {
-                                wavesurfer?.setTime(kv["time"]);
-                            }
-                            if (kv["zoom"]) {
-                                wavesurfer?.zoom(kv["zoom"]);
-                            }
-                        }}
-                        onPlayPause={() => {
-                            wavesurfer?.playPause();
-                        }}
-                        onSkip={(step) => {
-                            wavesurfer?.skip(step);
-                        }}
+                </div>
+                {/* Player */}
+                <div className="flex flex-col space-y-4 border-y border-stone-200 px-4 py-2">
+                    <div id="waveform" ref={playerRef} />
+                    <div
+                        id="minimap"
+                        ref={minimapRef}
+                        className="overflow-hidden rounded-lg border border-stone-200/50"
                     />
                 </div>
+                {/* Tools */}
+                <div className="flex justify-center border-b border-stone-200 bg-white p-2">
+                    <Button
+                        title="Add Segment"
+                        variant="outline"
+                        disabled={!track?.audio || !transcript}
+                        onClick={() => {
+                            if (!track?.audio || !transcript) return;
+                            // Add a new region in the player
+                            const newRegion = regionsPlugin.addRegion({
+                                start: currentTime,
+                                end: currentTime + 5,
+                                resize: true,
+                                drag: true,
+                            });
+                            // Add a new block in the transcript
+                            setTranscript(
+                                (prev) =>
+                                    prev && {
+                                        ...prev,
+                                        blocks: [
+                                            ...prev.blocks,
+                                            {
+                                                id: newRegion.id,
+                                                // TODO: use ms timestamps
+                                                from: newRegion.start,
+                                                to: newRegion.end,
+                                                text: "",
+                                                source: "system" as const,
+                                            },
+                                        ].sort((a, b) => a.from - b.from),
+                                    },
+                            );
+                            setActiveBlockId(newRegion.id);
+                        }}
+                        className="rounded-full"
+                    >
+                        <Icons.Plus size={16} />
+                        &nbsp;
+                        <span className="text-xs">Add Segment</span>
+                    </Button>
+                </div>
+                {/* Controls */}
+                <Controls
+                    currentTime={currentTime}
+                    duration={wavesurfer?.getDuration() || 0}
+                    isPlaying={isPlaying}
+                    onChange={(kv) => {
+                        if (kv["playbackSpeed"]) {
+                            wavesurfer?.setOptions({
+                                audioRate: kv["playbackSpeed"],
+                            });
+                        }
+                        if (kv["time"]) {
+                            wavesurfer?.setTime(kv["time"]);
+                        }
+                        if (kv["zoom"]) {
+                            wavesurfer?.zoom(kv["zoom"]);
+                        }
+                    }}
+                    onPlayPause={() => {
+                        wavesurfer?.playPause();
+                    }}
+                    onSkip={(step) => {
+                        wavesurfer?.skip(step);
+                    }}
+                />
             </div>
         </div>
     );

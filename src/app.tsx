@@ -5,7 +5,7 @@ import MinimapPlugin from "wavesurfer.js/dist/plugins/minimap.esm.js";
 import RegionsPlugin from "wavesurfer.js/dist/plugins/regions.esm.js";
 
 import TextareaAutosize from "react-textarea-autosize";
-import { Button, Icons, Input, Label } from "@/components";
+import { Icons, Input, Label } from "@/components";
 
 import Controls from "./controls";
 

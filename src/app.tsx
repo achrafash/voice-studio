@@ -8,9 +8,10 @@ import TextareaAutosize from "react-textarea-autosize";
 import { Icons, Input, Label } from "@/components";
 
 import Controls from "./controls";
-import SegmentsMenu from "./segments-menu";
 
 import { Block } from "./types";
+import { SAMPLE_RATE, mergeAudioBySource, mixAudioBuffers } from "./lib/audio";
+import * as wav from "./lib/wav";
 
 interface Transcript {
     startTime: number;
@@ -23,6 +24,8 @@ interface Track {
     duration: number;
     offset: number;
 }
+
+const audioFilePattern = /^\d+\.\d+-\d+\.\d+-(mic|system)\.wav$/;
 
 export default function App() {
     const [transcript, setTranscript] = useState<Transcript>();
@@ -154,48 +157,95 @@ export default function App() {
     async function onUpload(e: React.ChangeEvent<HTMLInputElement>) {
         const files = e.target.files;
         if (!files || files.length === 0) return;
-        const file = files[0];
-        // Compute duration
-        const audioContext = new window.AudioContext();
-        const arrayBuffer = await file.arrayBuffer();
-        const duration = await new Promise<number>((resolve) =>
-            audioContext.decodeAudioData(arrayBuffer, (buffer) => {
-                resolve(buffer.duration);
+
+        const projectName = files[0].webkitRelativePath.split("/")[0];
+        setProject(projectName);
+
+        const allFiles = await Promise.all(
+            Array.from(files).map(async (f) => {
+                const file: any = {
+                    name: f.name,
+                    type: f.type,
+                    arrayBuffer: new ArrayBuffer(1),
+                };
+
+                if (audioFilePattern.test(f.name)) {
+                    const [startTime, endTime, source] = f.name.split("-");
+                    file.startTime = parseFloat(startTime);
+                    file.endTime = parseFloat(endTime);
+                    file.source = source.split(".")[0];
+                    file.arrayBuffer = await f.arrayBuffer();
+                }
+                return file;
             }),
         );
+        setFiles(allFiles);
+
+        const audioFiles = allFiles.filter((f) =>
+            audioFilePattern.test(f.name),
+        );
+        console.log({ audioFiles });
+        const audioContext = new window.AudioContext();
+
+        // 1. merge audio files by source using timestamps
+        const mergedSignals = await mergeAudioBySource(audioFiles);
+        console.log({ mergedSignals });
+
+        let mergedBuffer: ArrayBuffer;
+
+        if (mergedSignals.length === 0) throw Error("No merged signals found");
+        if (mergedSignals.length === 1) {
+            mergedBuffer = mergedSignals[0].buffer;
+        } else {
+            // 2. mix sources, align timestamps, add padding if needed, normalize
+            const audioBuffers = (await Promise.all(
+                mergedSignals.map(async (signal) => {
+                    return audioContext.decodeAudioData(signal.buffer);
+                }),
+            )) as [AudioBuffer, AudioBuffer];
+            const mixedBuffer = mixAudioBuffers(audioBuffers, audioContext);
+            console.log({ mixedBuffer });
+            // 3. save merged_audio.wav in the directory
+            mergedBuffer = wav.encode([mixedBuffer.getChannelData(0)], {
+                sampleRate: SAMPLE_RATE,
+                bitDepth: 16,
+            });
+        }
+
+        const blob = new Blob([mergedBuffer], { type: "audio/wav" });
+        const mergedAudioURL = URL.createObjectURL(blob);
+        console.log({ mergedAudioURL });
+
+        const startTime = Math.min(...mergedSignals.map((s) => s.start));
+        const endTime = Math.max(...mergedSignals.map((s) => s.end));
 
         // Initialize transcript
-        setTranscript((prev) => ({
-            startTime: 0,
-            // TODO: use ms timestamps for transcript
-            endTime:
-                prev?.endTime && prev.endTime > duration
-                    ? prev.endTime
-                    : duration,
+        setTranscript({
+            startTime,
+            endTime,
             blocks: [],
-        }));
-
-        const audioURL = URL.createObjectURL(file);
+        });
         setTrack({
-            name: file.name,
-            duration,
-            audio: audioURL,
-            offset: 0,
+            name: projectName,
+            duration: endTime - startTime,
+            audio: mergedAudioURL,
+            offset: startTime,
         });
     }
 
     return (
         <div className="flex h-screen flex-col overflow-hidden bg-stone-50">
-            <header className="grid grid-cols-3 border-b bg-white">
+            <header className="grid grid-cols-3 border-b border-stone-200 bg-white">
                 <div className="flex items-center px-4 py-2">
                     <button className="relative cursor-default rounded-md border border-stone-200 px-4 py-1.5 text-xs font-medium text-stone-800 hover:bg-stone-200/20 active:border-amber-400 active:ring-2 active:ring-amber-200/50">
                         Import audio
                         <input
                             className="absolute inset-0 opacity-0"
                             type="file"
-                            name="audio_files"
-                            id="audio_files"
-                            accept=".wav"
+                            name="project"
+                            multiple
+                            // @ts-expect-error
+                            webkitdirectory=""
                             onChange={(e) => {
                                 onUpload(e);
                             }}
@@ -203,10 +253,11 @@ export default function App() {
                     </button>
                 </div>
                 <div className="flex items-center justify-center space-x-1 p-2 text-xs">
-                    <div className="rounded-md border border-stone-200 px-3 py-1.5 shadow-sm">
+                    <div className="w-full rounded-md border border-stone-200 px-3 py-1.5 shadow-sm">
                         <input
-                            placeholder={track?.name ?? "Untitled"}
-                            className="text-center text-xs text-stone-800 focus:outline-none"
+                            placeholder={"Untitled"}
+                            defaultValue={project}
+                            className="w-full text-center text-xs text-stone-800 focus:outline-none"
                         />
                     </div>
                 </div>
@@ -484,9 +535,8 @@ export default function App() {
                             className="overflow-hidden rounded-lg border border-stone-200/50"
                         />
                     </div>
-
                     {/* Tools */}
-                    <div className="flex justify-center bg-white p-2">
+                    {/* <div className="flex justify-center bg-white p-2">
                         <Button
                             title="Add Segment"
                             variant="outline"
@@ -526,8 +576,7 @@ export default function App() {
                             &nbsp;
                             <span className="text-xs">Add Segment</span>
                         </Button>
-                    </div>
-
+                    </div> */}
                     {/* Controls */}
                     <Controls
                         currentTime={currentTime}

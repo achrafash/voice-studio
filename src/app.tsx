@@ -44,49 +44,16 @@ export default function App() {
     >();
     const [project, setProject] = useState<string>();
     const [activeBlockId, setActiveBlockId] = useState<string>();
+    const activeBlockIdRef = useRef(activeBlockId);
+    useEffect(() => {
+        activeBlockIdRef.current = activeBlockId;
+    }, [activeBlockId]);
 
     const playerRef = useRef(null);
     const minimapRef = useRef(null);
 
     const regionsPlugin = useMemo(() => {
-        const regionsPlugin = new RegionsPlugin();
-        regionsPlugin.on("region-in", (region) => {
-            setActiveBlockId(region.id);
-        });
-        regionsPlugin.on("region-out", (region) => {
-            if (activeBlockId === region.id) setActiveBlockId(undefined);
-        });
-        regionsPlugin.on("region-double-clicked", (region) => {
-            region.play();
-        });
-        regionsPlugin.on("region-clicked", (region) => {
-            region.element.focus();
-        });
-        regionsPlugin.on("region-created", (region) => {
-            region.element.tabIndex = 0;
-            createBlockFromRegion(region);
-        });
-        regionsPlugin.on("region-updated", (region) => {
-            setTranscript(
-                (prev) =>
-                    prev && {
-                        ...prev,
-                        blocks: prev.blocks
-                            .map((block) => {
-                                if (block.id !== region.id) return block;
-
-                                return {
-                                    ...block,
-                                    from: region.start * 1_000 + prev.startTime,
-                                    to: region.end * 1_000 + prev.startTime,
-                                };
-                            })
-                            .sort((a, b) => a.from - b.from),
-                    },
-            );
-        });
-
-        return regionsPlugin;
+        return new RegionsPlugin();
     }, []);
 
     const { wavesurfer, isPlaying, currentTime } = useWavesurfer({
@@ -124,6 +91,52 @@ export default function App() {
         }, []),
     });
 
+    // regions event listeners
+    useEffect(() => {
+        regionsPlugin.on("region-in", (region) => {
+            setActiveBlockId(region.id);
+        });
+        regionsPlugin.on("region-out", (region) => {
+            if (activeBlockId === region.id) setActiveBlockId(undefined);
+        });
+        regionsPlugin.on("region-double-clicked", (region) => {
+            region.play();
+        });
+        regionsPlugin.on("region-clicked", (region) => {
+            region.element.focus();
+            setActiveBlockId(region.id);
+        });
+        regionsPlugin.on("region-created", (region) => {
+            region.element.tabIndex = 0;
+            region.element.onfocus = () => setActiveBlockId(region.id);
+            createBlockFromRegion(region);
+        });
+        regionsPlugin.on("region-removed", () => {
+            setActiveBlockId(undefined);
+        });
+        regionsPlugin.on("region-updated", (region) => {
+            setTranscript(
+                (prev) =>
+                    prev && {
+                        ...prev,
+                        blocks: prev.blocks
+                            .map((block) => {
+                                if (block.id !== region.id) return block;
+
+                                return {
+                                    ...block,
+                                    from: region.start * 1_000 + prev.startTime,
+                                    to: region.end * 1_000 + prev.startTime,
+                                };
+                            })
+                            .sort((a, b) => a.from - b.from),
+                    },
+            );
+        });
+
+        return () => regionsPlugin.unAll();
+    }, [regionsPlugin]);
+
     // Registering wavesurfer events
     useEffect(() => {
         if (!wavesurfer) return;
@@ -152,9 +165,33 @@ export default function App() {
         }
         window.addEventListener("keydown", enableCreateBlockOnDrag);
 
+        function deleteBlockEventHandler(e: KeyboardEvent) {
+            if (!e.metaKey) return;
+            if (e.key !== "Delete" && e.key !== "Backspace") return;
+            if (!activeBlockIdRef.current) return;
+
+            // remove block from transcript
+            setTranscript(
+                (prev) =>
+                    prev && {
+                        ...prev,
+                        blocks: prev.blocks.filter(
+                            (b) => b.id !== activeBlockIdRef.current,
+                        ),
+                    },
+            );
+            // remove region from player
+            const region = regionsPlugin
+                .getRegions()
+                .find((region) => region.id === activeBlockIdRef.current);
+            region?.remove();
+        }
+        window.addEventListener("keydown", deleteBlockEventHandler);
+
         return () => {
             unsubscribe();
             window.removeEventListener("keydown", enableCreateBlockOnDrag);
+            window.removeEventListener("keydown", deleteBlockEventHandler);
         };
     }, [wavesurfer]);
 
@@ -459,6 +496,9 @@ export default function App() {
                                 <div
                                     key={currentBlock.id}
                                     tabIndex={0}
+                                    onFocus={() =>
+                                        setActiveBlockId(currentBlock.id)
+                                    }
                                     className="group relative rounded outline outline-1 -outline-offset-1 outline-transparent ring-2 ring-transparent focus-within:outline-amber-400 focus-within:ring-orange-300/20 hover:outline-amber-400 hover:ring-orange-300/20"
                                 >
                                     <div className="absolute left-2 top-0">

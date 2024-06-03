@@ -10,7 +10,7 @@ import { Icons, Input, Label } from "@/components";
 import Controls from "./controls";
 
 import { Block } from "./types";
-import { SAMPLE_RATE, mergeAudioBySource, mixAudioBuffers } from "./lib/audio";
+import { SAMPLE_RATE, mergeAudioBySource } from "./lib/audio";
 import * as wav from "./lib/wav";
 
 interface Transcript {
@@ -195,18 +195,68 @@ export default function App() {
 
         if (mergedSignals.length === 0) throw Error("No merged signals found");
         if (mergedSignals.length === 1) {
-            mergedBuffer = mergedSignals[0].buffer;
+            mergedBuffer = wav.encode(
+                [Float32Array.from(mergedSignals[0].data)],
+                {
+                    sampleRate: SAMPLE_RATE,
+                    bitDepth: 16,
+                },
+            );
         } else {
-            // 2. mix sources, align timestamps, add padding if needed, normalize
-            const audioBuffers = (await Promise.all(
-                mergedSignals.map(async (signal) => {
-                    return audioContext.decodeAudioData(signal.buffer);
-                }),
-            )) as [AudioBuffer, AudioBuffer];
-            const mixedBuffer = mixAudioBuffers(audioBuffers, audioContext);
-            console.log({ mixedBuffer });
-            // 3. save merged_audio.wav in the directory
-            mergedBuffer = wav.encode([mixedBuffer.getChannelData(0)], {
+            // add padding so the 2 sources are aligned
+            if (mergedSignals[0].start < mergedSignals[1].start) {
+                const padStart = Array(
+                    Math.round(
+                        (mergedSignals[1].start - mergedSignals[0].start) *
+                            SAMPLE_RATE,
+                    ),
+                ).fill(0);
+                mergedSignals[1].data = [...padStart, ...mergedSignals[1].data];
+                mergedSignals[1].start = mergedSignals[0].start;
+            } else if (mergedSignals[1].start < mergedSignals[0].start) {
+                const padStart = Array(
+                    Math.round(
+                        (mergedSignals[0].start - mergedSignals[1].start) *
+                            SAMPLE_RATE,
+                    ),
+                ).fill(0);
+                mergedSignals[0].data = [...padStart, ...mergedSignals[0].data];
+                mergedSignals[0].start = mergedSignals[1].start;
+            }
+            if (mergedSignals[0].end < mergedSignals[1].end) {
+                const padEnd = Array(
+                    Math.round(
+                        (mergedSignals[1].end - mergedSignals[0].end) *
+                            SAMPLE_RATE,
+                    ),
+                ).fill(0);
+                mergedSignals[0].data = [...mergedSignals[0].data, ...padEnd];
+                mergedSignals[0].end = mergedSignals[1].end;
+            } else if (mergedSignals[1].end < mergedSignals[0].end) {
+                const padEnd = Array(
+                    Math.round(
+                        (mergedSignals[0].end - mergedSignals[1].end) *
+                            SAMPLE_RATE,
+                    ),
+                ).fill(0);
+                mergedSignals[1].data = [...mergedSignals[1].data, ...padEnd];
+                mergedSignals[1].end = mergedSignals[0].end;
+            }
+
+            // FIXME: the signals are not perfectly aligned for some reason
+            console.assert(
+                mergedSignals[1].data.length === mergedSignals[0].data.length,
+                "Signal length don't match",
+                { mergedSignals },
+            );
+
+            const mixedSignal = Array(mergedSignals[0].data.length)
+                .fill(0)
+                .map((_, i) => {
+                    return mergedSignals[0].data[i] + mergedSignals[1].data[i];
+                });
+
+            mergedBuffer = wav.encode([Float32Array.from(mixedSignal)], {
                 sampleRate: SAMPLE_RATE,
                 bitDepth: 16,
             });

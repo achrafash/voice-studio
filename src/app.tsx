@@ -5,13 +5,14 @@ import MinimapPlugin from "wavesurfer.js/dist/plugins/minimap.esm.js";
 import RegionsPlugin from "wavesurfer.js/dist/plugins/regions.esm.js";
 
 import TextareaAutosize from "react-textarea-autosize";
-import { Icons, Input, Label } from "@/components";
+import { Button, Icons, Input, Label } from "@/components";
 
 import Controls from "./controls";
 
 import { Block } from "./types";
-import { SAMPLE_RATE, mergeAudioBySource } from "./lib/audio";
 import * as wav from "./lib/wav";
+
+const SAMPLE_RATE = 16_000;
 
 interface Transcript {
     startTime: number;
@@ -166,15 +167,18 @@ export default function App() {
                 const file: any = {
                     name: f.name,
                     type: f.type,
-                    arrayBuffer: new ArrayBuffer(1),
                 };
 
+                // TODO: move all of this out of the files state
                 if (audioFilePattern.test(f.name)) {
                     const [startTime, endTime, source] = f.name.split("-");
                     file.startTime = parseFloat(startTime);
                     file.endTime = parseFloat(endTime);
                     file.source = source.split(".")[0];
                     file.arrayBuffer = await f.arrayBuffer();
+                    const result = wav.decode(file.arrayBuffer);
+                    if (!result) throw Error("Failed to load audio file");
+                    file.data = Array.from(result.channelData[0]);
                 }
                 return file;
             }),
@@ -185,89 +189,34 @@ export default function App() {
             audioFilePattern.test(f.name),
         );
         console.log({ audioFiles });
-        const audioContext = new window.AudioContext();
 
-        // 1. merge audio files by source using timestamps
-        const mergedSignals = await mergeAudioBySource(audioFiles);
-        console.log({ mergedSignals });
+        // merge and mix audio files in one go
+        const startTime = Math.min(...audioFiles.map((f) => f.startTime));
+        const endTime = Math.max(...audioFiles.map((f) => f.endTime));
 
-        let mergedBuffer: ArrayBuffer;
-
-        if (mergedSignals.length === 0) throw Error("No merged signals found");
-        if (mergedSignals.length === 1) {
-            mergedBuffer = wav.encode(
-                [Float32Array.from(mergedSignals[0].data)],
-                {
-                    sampleRate: SAMPLE_RATE,
-                    bitDepth: 16,
-                },
-            );
-        } else {
-            // add padding so the 2 sources are aligned
-            if (mergedSignals[0].start < mergedSignals[1].start) {
-                const padStart = Array(
-                    Math.round(
-                        (mergedSignals[1].start - mergedSignals[0].start) *
-                            SAMPLE_RATE,
-                    ),
-                ).fill(0);
-                mergedSignals[1].data = [...padStart, ...mergedSignals[1].data];
-                mergedSignals[1].start = mergedSignals[0].start;
-            } else if (mergedSignals[1].start < mergedSignals[0].start) {
-                const padStart = Array(
-                    Math.round(
-                        (mergedSignals[0].start - mergedSignals[1].start) *
-                            SAMPLE_RATE,
-                    ),
-                ).fill(0);
-                mergedSignals[0].data = [...padStart, ...mergedSignals[0].data];
-                mergedSignals[0].start = mergedSignals[1].start;
+        const signalLength = Math.round((endTime - startTime) * SAMPLE_RATE);
+        let mergedSignal = Array(signalLength).fill(0);
+        for (const source of ["mic", "system"]) {
+            const signal = Array(signalLength).fill(0);
+            for (const audio of audioFiles.filter((f) => f.source === source)) {
+                for (let i = 0; i < audio.data.length; i++) {
+                    signal[
+                        Math.round(
+                            (audio.startTime - startTime) * SAMPLE_RATE,
+                        ) + i
+                    ] = audio.data[i];
+                }
             }
-            if (mergedSignals[0].end < mergedSignals[1].end) {
-                const padEnd = Array(
-                    Math.round(
-                        (mergedSignals[1].end - mergedSignals[0].end) *
-                            SAMPLE_RATE,
-                    ),
-                ).fill(0);
-                mergedSignals[0].data = [...mergedSignals[0].data, ...padEnd];
-                mergedSignals[0].end = mergedSignals[1].end;
-            } else if (mergedSignals[1].end < mergedSignals[0].end) {
-                const padEnd = Array(
-                    Math.round(
-                        (mergedSignals[0].end - mergedSignals[1].end) *
-                            SAMPLE_RATE,
-                    ),
-                ).fill(0);
-                mergedSignals[1].data = [...mergedSignals[1].data, ...padEnd];
-                mergedSignals[1].end = mergedSignals[0].end;
-            }
-
-            // FIXME: the signals are not perfectly aligned for some reason
-            console.assert(
-                mergedSignals[1].data.length === mergedSignals[0].data.length,
-                "Signal length don't match",
-                { mergedSignals },
-            );
-
-            const mixedSignal = Array(mergedSignals[0].data.length)
-                .fill(0)
-                .map((_, i) => {
-                    return mergedSignals[0].data[i] + mergedSignals[1].data[i];
-                });
-
-            mergedBuffer = wav.encode([Float32Array.from(mixedSignal)], {
-                sampleRate: SAMPLE_RATE,
-                bitDepth: 16,
-            });
+            mergedSignal = mergedSignal.map((value, i) => value + signal[i]);
         }
+        const mergedBuffer = wav.encode([Float32Array.from(mergedSignal)], {
+            sampleRate: SAMPLE_RATE,
+            bitDepth: 16,
+        });
 
         const blob = new Blob([mergedBuffer], { type: "audio/wav" });
         const mergedAudioURL = URL.createObjectURL(blob);
         console.log({ mergedAudioURL });
-
-        const startTime = Math.min(...mergedSignals.map((s) => s.start));
-        const endTime = Math.max(...mergedSignals.map((s) => s.end));
 
         // Initialize transcript
         setTranscript({
@@ -586,7 +535,7 @@ export default function App() {
                         />
                     </div>
                     {/* Tools */}
-                    {/* <div className="flex justify-center bg-white p-2">
+                    <div className="flex justify-center bg-white p-2">
                         <Button
                             title="Add Segment"
                             variant="outline"
@@ -626,7 +575,7 @@ export default function App() {
                             &nbsp;
                             <span className="text-xs">Add Segment</span>
                         </Button>
-                    </div> */}
+                    </div>
                     {/* Controls */}
                     <Controls
                         currentTime={currentTime}

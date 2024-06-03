@@ -130,10 +130,10 @@ export default function App() {
         });
         function enableCreateBlockOnDrag(e: KeyboardEvent) {
             if (!e.altKey) return;
-            wavesurfer?.setOptions({ dragToSeek: false });
+            wavesurfer?.setOptions({ dragToSeek: false, interact: false });
             const disable = regionsPlugin.enableDragSelection({});
             window.addEventListener("keyup", () => {
-                wavesurfer?.setOptions({ dragToSeek: true });
+                wavesurfer?.setOptions({ dragToSeek: true, interact: true });
                 disable();
             }),
                 { once: true };

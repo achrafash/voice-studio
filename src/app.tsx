@@ -10,11 +10,18 @@ import TextareaAutosize from "react-textarea-autosize";
 import { Icons, Input, Label } from "@/components";
 
 import Controls from "./controls";
-
-import { Block } from "./types";
 import * as wav from "./lib/wav";
 
 const SAMPLE_RATE = 16_000;
+
+interface Block {
+    id: string;
+    from: number;
+    to: number;
+    text: string;
+    source: "mic" | "system";
+    speaker_id?: any;
+}
 
 interface Transcript {
     startTime: number;

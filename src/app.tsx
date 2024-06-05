@@ -338,6 +338,7 @@ export default function App() {
     }
 
     function createBlockFromRegion(region: Region) {
+        if (!track) return;
         // Add a new block in the transcript
         setTranscript(
             (prev) =>
@@ -347,10 +348,11 @@ export default function App() {
                         ...prev.blocks,
                         {
                             id: region.id,
-                            from: region.start * 1_000 + prev.startTime,
-                            to: region.end * 1_000 + prev.startTime,
+                            from: region.start * 1_000 + track.offset,
+                            to: region.end * 1_000 + track.offset,
                             text: "",
                             source: "system" as const,
+                            speaker_id: prev.blocks.slice(-1)[0]?.speaker_id,
                         },
                     ].sort((a, b) => a.from - b.from),
                 },

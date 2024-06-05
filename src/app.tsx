@@ -122,6 +122,7 @@ export default function App() {
             setActiveBlockId(undefined);
         });
         regionsPlugin.on("region-updated", (region) => {
+            if (!track) return;
             setTranscript(
                 (prev) =>
                     prev && {
@@ -132,8 +133,8 @@ export default function App() {
 
                                 return {
                                     ...block,
-                                    from: region.start * 1_000 + prev.startTime,
-                                    to: region.end * 1_000 + prev.startTime,
+                                    from: region.start * 1_000 + track.offset,
+                                    to: region.end * 1_000 + track.offset,
                                 };
                             })
                             .sort((a, b) => a.from - b.from),
@@ -142,7 +143,7 @@ export default function App() {
         });
 
         return () => regionsPlugin.unAll();
-    }, [regionsPlugin]);
+    }, [regionsPlugin, track]);
 
     // Registering wavesurfer events
     useEffect(() => {

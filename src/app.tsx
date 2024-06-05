@@ -150,7 +150,7 @@ export default function App() {
         if (!wavesurfer) return;
 
         const unsubscribe = wavesurfer.on("ready", () => {
-            if (transcript?.blocks) {
+            if (transcript?.blocks && regionsPlugin.getRegions().length === 0) {
                 transcript.blocks.forEach((block) => {
                     regionsPlugin.addRegion({
                         id: block.id,

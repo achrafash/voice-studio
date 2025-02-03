@@ -32,23 +32,11 @@ interface Track {
     name: string;
     audio: string;
     duration: number;
-    offset: number;
 }
-
-const audioFilePattern = /^\d+\.\d+-\d+\.\d+-(mic|system)\.wav$/;
 
 export default function App() {
     const [transcript, setTranscript] = useState<Transcript>();
     const [track, setTrack] = useState<Track>();
-    const [files, setFiles] = useState<
-        {
-            name: string;
-            type: string;
-            startTime?: number;
-            endTime?: number;
-            source?: string;
-        }[]
-    >();
     const [project, setProject] = useState<string>();
     const [activeBlockId, setActiveBlockId] = useState<string>();
     const activeBlockIdRef = useRef(activeBlockId);
@@ -133,8 +121,8 @@ export default function App() {
 
                                 return {
                                     ...block,
-                                    from: region.start * 1_000 + track.offset,
-                                    to: region.end * 1_000 + track.offset,
+                                    from: region.start * 1_000,
+                                    to: region.end * 1_000,
                                 };
                             })
                             .sort((a, b) => a.from - b.from),
@@ -224,77 +212,29 @@ export default function App() {
         const files = e.target.files;
         if (!files || files.length === 0) return;
 
-        const projectName = files[0].webkitRelativePath.split("/")[0];
-        setProject(projectName);
+        if (files[0].type === "audio/wav") {
+            const projectName = files[0].name.split(".")[0];
+            setProject(projectName);
+            const arrayBuffer = await files[0].arrayBuffer();
+            const result = wav.decode(arrayBuffer);
+            if (!result) throw Error("Failed to load audio file");
+            if (result.sampleRate !== SAMPLE_RATE)
+                throw Error("Invalid sample rate");
 
-        const allFiles = await Promise.all(
-            Array.from(files).map(async (f) => {
-                const file: any = {
-                    name: f.name,
-                    type: f.type,
-                };
-
-                // TODO: move all of this out of the files state
-                if (audioFilePattern.test(f.name)) {
-                    const [startTime, endTime, source] = f.name.split("-");
-                    file.startTime = parseFloat(startTime);
-                    file.endTime = parseFloat(endTime);
-                    file.source = source.split(".")[0];
-                    file.arrayBuffer = await f.arrayBuffer();
-                    const result = wav.decode(file.arrayBuffer);
-                    if (!result) throw Error("Failed to load audio file");
-                    file.data = Array.from(result.channelData[0]);
-                }
-                return file;
-            }),
-        );
-        setFiles(allFiles);
-
-        const audioFiles = allFiles.filter((f) =>
-            audioFilePattern.test(f.name),
-        );
-        console.log({ audioFiles });
-
-        // merge and mix audio files in one go
-        const startTime = Math.min(...audioFiles.map((f) => f.startTime));
-        const endTime = Math.max(...audioFiles.map((f) => f.endTime));
-
-        const signalLength = Math.round((endTime - startTime) * SAMPLE_RATE);
-        let mergedSignal = Array(signalLength).fill(0);
-        for (const source of ["mic", "system"]) {
-            const signal = Array(signalLength).fill(0);
-            for (const audio of audioFiles.filter((f) => f.source === source)) {
-                for (let i = 0; i < audio.data.length; i++) {
-                    signal[
-                        Math.round(
-                            (audio.startTime - startTime) * SAMPLE_RATE,
-                        ) + i
-                    ] = audio.data[i];
-                }
-            }
-            mergedSignal = mergedSignal.map((value, i) => value + signal[i]);
+            const data = Array.from(result.channelData[0]);
+            const startTime = 0;
+            const endTime = result.sampleRate * data.length;
+            setTranscript({
+                startTime,
+                endTime,
+                blocks: [],
+            });
+            setTrack({
+                name: projectName,
+                duration: endTime - startTime,
+                audio: URL.createObjectURL(files[0]),
+            });
         }
-        const mergedBuffer = wav.encode([Float32Array.from(mergedSignal)], {
-            sampleRate: SAMPLE_RATE,
-            bitDepth: 16,
-        });
-
-        const blob = new Blob([mergedBuffer], { type: "audio/wav" });
-        const mergedAudioURL = URL.createObjectURL(blob);
-        console.log({ mergedAudioURL });
-
-        // Initialize transcript
-        setTranscript({
-            startTime: startTime * 1_000,
-            endTime: endTime * 1_000,
-            blocks: [],
-        });
-        setTrack({
-            name: projectName,
-            duration: endTime - startTime,
-            audio: mergedAudioURL,
-            offset: startTime * 1_000,
-        });
     }
 
     function loadTranscriptFromFile(file: File) {
@@ -303,35 +243,25 @@ export default function App() {
         reader.onload = (event) => {
             const content = event.target?.result as string;
             const data = JSON.parse(content);
-            let offset = 0;
-            if (data.startTime === 0) offset = track.offset;
 
             const newTranscript = {
-                startTime: data.startTime + offset,
-                endTime: data.endTime + offset,
-                blocks: Array<Block>(),
+                startTime: data.startTime,
+                endTime: data.endTime,
+                blocks: Array<Block>(data.blocks.length),
             };
-            console.log({ offset, blocks: data.blocks.slice(0, 3) });
+
             for (const block of data.blocks) {
                 const region = regionsPlugin.addRegion({
                     id: block.id,
-                    start:
-                        (block.from -
-                            (data.startTime === 0 ? 0 : track.offset)) /
-                        1_000,
-                    end:
-                        (block.to - (data.startTime === 0 ? 0 : track.offset)) /
-                        1_000,
+                    start: block.from / 1_000,
+                    end: block.to / 1_000,
                 });
                 newTranscript.blocks.push({
                     ...block,
                     id: block.id ?? region.id,
-                    from: block.from + offset,
-                    to: block.to + offset,
                 });
             }
             newTranscript.blocks.sort((a, b) => a.from - b.from);
-
             setTranscript(newTranscript);
         };
         reader.readAsText(file);
@@ -348,8 +278,8 @@ export default function App() {
                         ...prev.blocks,
                         {
                             id: region.id,
-                            from: region.start * 1_000 + track.offset,
-                            to: region.end * 1_000 + track.offset,
+                            from: region.start * 1_000,
+                            to: region.end * 1_000,
                             text: "",
                             source: "system" as const,
                             speaker_id: prev.blocks.slice(-1)[0]?.speaker_id,
@@ -371,11 +301,7 @@ export default function App() {
                             type="file"
                             name="project"
                             multiple
-                            // @ts-expect-error
-                            webkitdirectory=""
-                            onChange={(e) => {
-                                onUpload(e);
-                            }}
+                            onChange={(e) => onUpload(e)}
                         />
                     </button>
                 </div>
@@ -435,41 +361,6 @@ export default function App() {
             {/* Main Area */}
             <div className="flex h-full flex-grow flex-col overflow-hidden">
                 <div className="grid flex-1 grid-cols-4 gap-x-4 overflow-y-auto px-4">
-                    {/* File Explorer */}
-                    {files && (
-                        <div className="my-4 mr-0 flex max-w-[240px] overflow-hidden rounded-sm border border-stone-200 bg-white">
-                            <ul className="overflow-auto p-2">
-                                {files.map((file) => (
-                                    <li
-                                        key={file.name}
-                                        className="flex w-full cursor-default items-center space-x-1.5 rounded p-1.5 pr-4 hover:bg-stone-100/80"
-                                    >
-                                        {file.type === "audio/wav" ? (
-                                            <Icons.WavFile
-                                                size={14}
-                                                className="flex-shrink-0 text-stone-500"
-                                            />
-                                        ) : file.type === "application/json" ? (
-                                            <Icons.TranscriptFile
-                                                size={14}
-                                                className="flex-shrink-0 text-stone-500"
-                                                reference={
-                                                    file.name ===
-                                                    "groundTruth-transcript.json"
-                                                }
-                                            />
-                                        ) : (
-                                            <div className="h-4 w-4 rounded-sm border border-stone-200 bg-stone-50" />
-                                        )}
-                                        <span className="truncate text-xs text-stone-700">
-                                            {file.name}
-                                        </span>
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
-                    )}
-
                     {/* Editor */}
                     <div className="col-span-3 col-start-2 flex max-w-xl flex-col overflow-y-auto border-x border-stone-200 bg-white xl:col-span-2 xl:col-start-2 xl:max-w-3xl">
                         <div className="relative w-full flex-1 space-y-0.5 divide-y divide-stone-50 py-8">

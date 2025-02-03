@@ -434,7 +434,6 @@ export default function App() {
                                         />
                                     </div>
                                     <TextareaAutosize
-                                        key={currentBlock.id}
                                         minRows={1}
                                         name="transcription"
                                         defaultValue={currentBlock.text}

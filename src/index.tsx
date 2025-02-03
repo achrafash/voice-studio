@@ -12,8 +12,6 @@ import {
     Button,
 } from "@/components";
 
-import VERSION from "./version";
-
 function InfoMenu() {
     return (
         <DropdownMenu>
@@ -59,7 +57,7 @@ function InfoMenu() {
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem disabled className="text-xs">
-                    Voice Studio {VERSION}
+                    Voice Studio {APP_VERSION}
                 </DropdownMenuItem>
             </DropdownMenuContent>
         </DropdownMenu>

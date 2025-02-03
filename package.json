@@ -6,8 +6,7 @@
     "scripts": {
         "dev": "vite --port 3000",
         "build": "tsc && vite build",
-        "preview": "vite preview",
-        "postinstall": "node ./scripts/update-version.mjs"
+        "preview": "vite preview"
     },
     "dependencies": {
         "@radix-ui/react-dropdown-menu": "^2.0.6",

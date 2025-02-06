@@ -219,7 +219,7 @@ export default function App() {
         if (!files || files.length === 0) return;
 
         if (files[0].type === "audio/wav") {
-            const projectName = files[0].name.split(".")[0];
+            const projectName = files[0].name.split(".").slice(0, -1).join(".");
             setProject(projectName);
             const arrayBuffer = await files[0].arrayBuffer();
             const result = wav.decode(arrayBuffer);

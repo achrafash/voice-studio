@@ -253,7 +253,7 @@ export default function App() {
             const newTranscript = {
                 startTime: data.startTime,
                 endTime: data.endTime,
-                blocks: Array<Block>(data.blocks.length),
+                blocks: Array<Block>(),
             };
 
             for (const block of data.blocks) {
@@ -288,7 +288,7 @@ export default function App() {
                             to: region.end * 1_000,
                             text: "",
                             source: "system" as const,
-                            speaker_id: prev.blocks.slice(-1)[0]?.speaker_id,
+                            speaker_id: prev.blocks.at(-1)?.speaker_id,
                         },
                     ].sort((a, b) => a.from - b.from),
                 },

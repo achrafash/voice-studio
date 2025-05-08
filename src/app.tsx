@@ -92,6 +92,7 @@ export default function App() {
         onDrop: async (files) => {
             if (!files || files.length === 0) return;
             if (files[0].type === "application/json") {
+                regionsPlugin.clearRegions();
                 loadTranscriptFromFile(files[0]);
             }
         },

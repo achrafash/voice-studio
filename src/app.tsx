@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useDropzone } from "react-dropzone";
 // Wavesurfer
 import { useWavesurfer } from "@wavesurfer/react";
 import MinimapPlugin from "wavesurfer.js/dist/plugins/minimap.esm.js";
@@ -50,6 +51,40 @@ export default function App() {
     const regionsPlugin = useMemo(() => {
         return new RegionsPlugin();
     }, []);
+
+    const trackDropzone = useDropzone({
+        accept: { "audio/wav": [".wav"] },
+        maxFiles: 1,
+        onDrop: async (files) => {
+            if (!files || files.length === 0) return;
+            if (files[0].type === "audio/wav") {
+                const projectName = files[0].name
+                    .split(".")
+                    .slice(0, -1)
+                    .join(".");
+                setProject(projectName);
+                const arrayBuffer = await files[0].arrayBuffer();
+                const result = wav.decode(arrayBuffer);
+                if (!result) throw Error("Failed to load audio file");
+                if (result.sampleRate !== SAMPLE_RATE)
+                    throw Error("Invalid sample rate");
+
+                const data = Array.from(result.channelData[0]);
+                const startTime = 0;
+                const endTime = result.sampleRate * data.length;
+                setTranscript({
+                    startTime,
+                    endTime,
+                    blocks: [],
+                });
+                setTrack({
+                    name: projectName,
+                    duration: endTime - startTime,
+                    audio: URL.createObjectURL(files[0]),
+                });
+            }
+        },
+    });
 
     const { wavesurfer, isPlaying, currentTime } = useWavesurfer({
         url: track?.audio,
@@ -491,13 +526,34 @@ export default function App() {
                     </div>
                 </div>
                 {/* Player */}
-                <div className="flex flex-col space-y-4 border-y border-stone-200 px-4 py-2">
-                    <div id="waveform" ref={playerRef} />
-                    <div
-                        id="minimap"
-                        ref={minimapRef}
-                        className="overflow-hidden rounded-lg border border-stone-200/50"
-                    />
+                <div className="flex flex-col space-y-4 border-y border-stone-200 p-2">
+                    {track?.audio ? (
+                        <>
+                            <div id="waveform" ref={playerRef} />
+                            <div
+                                id="minimap"
+                                ref={minimapRef}
+                                className="overflow-hidden rounded-lg border border-stone-200/50"
+                            />
+                        </>
+                    ) : (
+                        <div
+                            {...trackDropzone.getRootProps()}
+                            className="flex h-full w-full items-center justify-center rounded-lg border-2 border-dashed border-stone-200/50"
+                        >
+                            <input {...trackDropzone.getInputProps()} />
+                            <div className="p-4 text-center">
+                                <p className="text-sm font-medium text-stone-800">
+                                    Click here to upload an audio file or drop a
+                                    file here
+                                </p>
+                                <small className="text-xs text-stone-400">
+                                    Only supports .wav files, 16kHz, 16-bit,
+                                    mono
+                                </small>
+                            </div>
+                        </div>
+                    )}
                 </div>
                 {/* Controls */}
                 <Controls

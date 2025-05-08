@@ -377,23 +377,28 @@ export default function App() {
                     <div className="col-span-3 col-start-2 flex max-w-xl flex-col overflow-y-hidden border-x border-stone-200 bg-white xl:col-span-2 xl:col-start-2 xl:max-w-3xl">
                         <div
                             {...transcriptDropzone.getRootProps()}
-                            className="relative h-full w-full flex-1 space-y-0.5 divide-y divide-stone-50 overflow-y-hidden"
+                            className="relative h-full w-full flex-1 overflow-y-hidden"
                         >
                             {(transcript?.blocks?.length === 0 ||
                                 transcriptDropzone.isDragActive) && (
-                                <div className="sticky inset-0 z-10 h-full bg-white/50 p-2">
-                                    <div className="flex h-full w-full items-center justify-center rounded-lg border-2 border-dashed border-stone-200/50">
+                                <div className="absolute inset-0 z-10 h-full bg-white/80 p-2">
+                                    <div
+                                        className={`flex h-full w-full items-center justify-center rounded-lg border-2 border-dashed border-stone-200/70 ${
+                                            transcriptDropzone.isDragActive &&
+                                            "outline outline-2 outline-offset-2 outline-amber-300"
+                                        }`}
+                                    >
                                         <input
                                             {...transcriptDropzone.getInputProps()}
                                         />
                                         <div className="select-none p-4 text-center">
-                                            <p className="text-sm font-medium text-stone-800">
-                                                Click here to upload a
-                                                transcript or drop a file here
+                                            <p className="text-sm font-medium text-stone-600">
+                                                Drag and drop transcript file to
+                                                upload
                                             </p>
-                                            <small className="text-xs text-stone-400">
-                                                Only supports JSON files
-                                            </small>
+                                            <p className="text-sm text-stone-400">
+                                                Supports JSON files only
+                                            </p>
                                         </div>
                                     </div>
                                 </div>
@@ -488,8 +493,30 @@ export default function App() {
                 {/* Player */}
                 <div
                     {...trackDropzone.getRootProps()}
-                    className="relative min-h-24 border-y border-stone-200 bg-white"
+                    className="relative h-40 border-y border-stone-200 bg-white"
                 >
+                    {(!track?.audio || trackDropzone.isDragActive) && (
+                        <div className="absolute inset-0 z-10 bg-white/80 p-2">
+                            <div
+                                className={`flex h-full w-full items-center justify-center rounded-lg border-2 border-dashed border-stone-200/50 ${
+                                    trackDropzone.isDragActive &&
+                                    "outline outline-2 outline-offset-2 outline-amber-300"
+                                }`}
+                            >
+                                <input {...trackDropzone.getInputProps()} />
+                                <div className="select-none p-4 text-center">
+                                    <p className="text-sm font-medium text-stone-600">
+                                        Drag and drop audio file to upload
+                                    </p>
+                                    <p className="text-sm text-stone-400">
+                                        Supports wav files (16kHz, 16-bit, mono)
+                                        only
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     {track?.audio && (
                         <div className="flex flex-col space-y-4 p-2">
                             <div id="waveform" ref={playerRef} />
@@ -498,24 +525,6 @@ export default function App() {
                                 ref={minimapRef}
                                 className="overflow-hidden rounded-lg border border-stone-200/50"
                             />
-                        </div>
-                    )}
-
-                    {(!track?.audio || trackDropzone.isDragActive) && (
-                        <div className="absolute inset-0 z-10 bg-white/50 p-2">
-                            <div className="flex h-full w-full items-center justify-center rounded-lg border-2 border-dashed border-stone-200/50">
-                                <input {...trackDropzone.getInputProps()} />
-                                <div className="p-4 text-center">
-                                    <p className="text-sm font-medium text-stone-800">
-                                        Click here to upload an audio file or
-                                        drop a file here
-                                    </p>
-                                    <small className="text-xs text-stone-400">
-                                        Only supports .wav files, 16kHz, 16-bit,
-                                        mono
-                                    </small>
-                                </div>
-                            </div>
                         </div>
                     )}
                 </div>

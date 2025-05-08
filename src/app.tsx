@@ -86,6 +86,17 @@ export default function App() {
         },
     });
 
+    const transcriptDropzone = useDropzone({
+        accept: { "application/json": [".json"] },
+        maxFiles: 1,
+        onDrop: async (files) => {
+            if (!files || files.length === 0) return;
+            if (files[0].type === "application/json") {
+                loadTranscriptFromFile(files[0]);
+            }
+        },
+    });
+
     const { wavesurfer, isPlaying, currentTime } = useWavesurfer({
         url: track?.audio,
         container: playerRef,
@@ -404,53 +415,74 @@ export default function App() {
                 <div className="grid flex-1 grid-cols-4 gap-x-4 overflow-y-auto px-4">
                     {/* Editor */}
                     <div className="col-span-3 col-start-2 flex max-w-xl flex-col overflow-y-auto border-x border-stone-200 bg-white xl:col-span-2 xl:col-start-2 xl:max-w-3xl">
-                        <div className="relative w-full flex-1 space-y-0.5 divide-y divide-stone-50 py-8">
+                        <div className="relative w-full flex-1 space-y-0.5 divide-y divide-stone-50">
                             {transcript?.blocks?.length === 0 && (
-                                <div className="absolute inset-0 mx-auto flex w-max flex-col justify-center space-y-2 text-sm">
-                                    <Label htmlFor="transcript">
-                                        Already have a transcript? Start from
-                                        there!
-                                    </Label>
-                                    <Input
-                                        type="file"
-                                        accept="json"
-                                        name="transcript"
-                                        id="transcript"
-                                        className="text-sm"
-                                        onChange={(e) => {
-                                            if (
-                                                !e.target.files ||
-                                                e.target.files.length === 0
-                                            )
-                                                return;
-                                            const file = e.target.files[0];
-                                            if (
-                                                file.type !== "application/json"
-                                            )
-                                                return;
-                                            loadTranscriptFromFile(file);
-                                        }}
-                                    />
+                                <div className="h-full w-full p-2">
+                                    <div
+                                        {...transcriptDropzone.getRootProps()}
+                                        className="flex h-full w-full items-center justify-center rounded-lg border-2 border-dashed border-stone-200/50"
+                                    >
+                                        <input
+                                            {...transcriptDropzone.getInputProps()}
+                                        />
+                                        <div className="select-none p-4 text-center">
+                                            <p className="text-sm font-medium text-stone-800">
+                                                Click here to upload a
+                                                transcript or drop a file here
+                                            </p>
+                                            <small className="text-xs text-stone-400">
+                                                Only supports JSON files
+                                            </small>
+                                        </div>
+                                    </div>
                                 </div>
                             )}
 
-                            {transcript?.blocks.map((currentBlock) => (
-                                <div
-                                    key={currentBlock.id}
-                                    tabIndex={0}
-                                    onFocus={() =>
-                                        setActiveBlockId(currentBlock.id)
-                                    }
-                                    className="group relative rounded outline outline-1 -outline-offset-1 outline-transparent ring-2 ring-transparent focus-within:outline-amber-400 focus-within:ring-orange-300/20 hover:outline-amber-400 hover:ring-orange-300/20"
-                                >
-                                    <div className="absolute left-2 top-0">
-                                        <input
-                                            type="text"
-                                            name="speaker"
-                                            className="max-w-[10ch] -translate-y-2/3 rounded-sm border border-stone-50 bg-white/50 px-1 py-0.5 text-xs text-stone-400 ring-orange-300/20 backdrop-blur-[2px] focus:visible focus:border-amber-400 focus:text-stone-600 focus:outline-none focus:ring-2"
-                                            defaultValue={
-                                                currentBlock.speaker_id
-                                            }
+                            <div className="py-8">
+                                {transcript?.blocks.map((currentBlock) => (
+                                    <div
+                                        key={currentBlock.id}
+                                        tabIndex={0}
+                                        onFocus={() =>
+                                            setActiveBlockId(currentBlock.id)
+                                        }
+                                        className="group relative rounded outline outline-1 -outline-offset-1 outline-transparent ring-2 ring-transparent focus-within:outline-amber-400 focus-within:ring-orange-300/20 hover:outline-amber-400 hover:ring-orange-300/20"
+                                    >
+                                        <div className="absolute left-2 top-0">
+                                            <input
+                                                type="text"
+                                                name="speaker"
+                                                className="max-w-[10ch] -translate-y-2/3 rounded-sm border border-stone-50 bg-white/50 px-1 py-0.5 text-xs text-stone-400 ring-orange-300/20 backdrop-blur-[2px] focus:visible focus:border-amber-400 focus:text-stone-600 focus:outline-none focus:ring-2"
+                                                defaultValue={
+                                                    currentBlock.speaker_id
+                                                }
+                                                onChange={(e) => {
+                                                    setTranscript(
+                                                        (prev) =>
+                                                            prev && {
+                                                                ...prev,
+                                                                blocks: prev.blocks.map(
+                                                                    (block) =>
+                                                                        block.id !==
+                                                                        currentBlock.id
+                                                                            ? block
+                                                                            : {
+                                                                                  ...currentBlock,
+                                                                                  speaker_id:
+                                                                                      e
+                                                                                          .target
+                                                                                          .value,
+                                                                              },
+                                                                ),
+                                                            },
+                                                    );
+                                                }}
+                                            />
+                                        </div>
+                                        <TextareaAutosize
+                                            minRows={1}
+                                            name="transcription"
+                                            defaultValue={currentBlock.text}
                                             onChange={(e) => {
                                                 setTranscript(
                                                     (prev) =>
@@ -463,45 +495,19 @@ export default function App() {
                                                                         ? block
                                                                         : {
                                                                               ...currentBlock,
-                                                                              speaker_id:
-                                                                                  e
-                                                                                      .target
-                                                                                      .value,
+                                                                              text: e
+                                                                                  .target
+                                                                                  .value,
                                                                           },
                                                             ),
                                                         },
                                                 );
                                             }}
+                                            className={`mx-auto flex w-full max-w-2xl resize-none rounded-lg bg-white pb-5 pl-6 pr-8 pt-4 text-sm text-stone-800 focus:outline-none ${activeBlockId === currentBlock.id ? "text-opacity-100" : "text-opacity-50"}`}
                                         />
                                     </div>
-                                    <TextareaAutosize
-                                        minRows={1}
-                                        name="transcription"
-                                        defaultValue={currentBlock.text}
-                                        onChange={(e) => {
-                                            setTranscript(
-                                                (prev) =>
-                                                    prev && {
-                                                        ...prev,
-                                                        blocks: prev.blocks.map(
-                                                            (block) =>
-                                                                block.id !==
-                                                                currentBlock.id
-                                                                    ? block
-                                                                    : {
-                                                                          ...currentBlock,
-                                                                          text: e
-                                                                              .target
-                                                                              .value,
-                                                                      },
-                                                        ),
-                                                    },
-                                            );
-                                        }}
-                                        className={`mx-auto flex w-full max-w-2xl resize-none rounded-lg bg-white pb-5 pl-6 pr-8 pt-4 text-sm text-stone-800 focus:outline-none ${activeBlockId === currentBlock.id ? "text-opacity-100" : "text-opacity-50"}`}
-                                    />
-                                </div>
-                            ))}
+                                ))}
+                            </div>
                         </div>
                         <footer className="w-full border-t border-stone-200 bg-stone-50 p-2">
                             <button

@@ -345,18 +345,7 @@ export default function App() {
     return (
         <div className="flex h-screen flex-col overflow-hidden bg-stone-50">
             <header className="grid grid-cols-3 border-b border-stone-200 bg-white">
-                <div className="flex items-center px-4 py-2">
-                    <button className="relative cursor-default rounded-md border border-stone-200 px-4 py-1.5 text-xs font-medium text-stone-800 hover:bg-stone-200/20 active:border-amber-400 active:ring-2 active:ring-amber-200/50">
-                        Import audio
-                        <input
-                            className="absolute inset-0 opacity-0"
-                            type="file"
-                            name="project"
-                            multiple
-                            onChange={(e) => onUpload(e)}
-                        />
-                    </button>
-                </div>
+                <div />
                 <div className="flex items-center justify-center space-x-1 p-2 text-xs">
                     <div className="w-full rounded-md border border-stone-200 px-3 py-1.5 shadow-sm">
                         <input

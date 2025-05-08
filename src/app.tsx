@@ -259,35 +259,6 @@ export default function App() {
         };
     }, [transcript]);
 
-    async function onUpload(e: React.ChangeEvent<HTMLInputElement>) {
-        const files = e.target.files;
-        if (!files || files.length === 0) return;
-
-        if (files[0].type === "audio/wav") {
-            const projectName = files[0].name.split(".").slice(0, -1).join(".");
-            setProject(projectName);
-            const arrayBuffer = await files[0].arrayBuffer();
-            const result = wav.decode(arrayBuffer);
-            if (!result) throw Error("Failed to load audio file");
-            if (result.sampleRate !== SAMPLE_RATE)
-                throw Error("Invalid sample rate");
-
-            const data = Array.from(result.channelData[0]);
-            const startTime = 0;
-            const endTime = result.sampleRate * data.length;
-            setTranscript({
-                startTime,
-                endTime,
-                blocks: [],
-            });
-            setTrack({
-                name: projectName,
-                duration: endTime - startTime,
-                audio: URL.createObjectURL(files[0]),
-            });
-        }
-    }
-
     function loadTranscriptFromFile(file: File) {
         if (!track) return;
         const reader = new FileReader();

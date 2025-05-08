@@ -8,7 +8,7 @@ import RegionsPlugin, {
 } from "wavesurfer.js/dist/plugins/regions.esm.js";
 
 import TextareaAutosize from "react-textarea-autosize";
-import { Icons, Input, Label } from "@/components";
+import { Icons } from "@/components";
 
 import Controls from "./controls";
 import * as wav from "./lib/wav";
@@ -191,7 +191,6 @@ export default function App() {
                         start: (block.from - transcript.startTime) / 1000,
                         end: (block.to - transcript.startTime) / 1000,
                     });
-                    console.log(`created region #${block.id}`);
                 });
             }
         });
@@ -321,6 +320,7 @@ export default function App() {
 
     function createBlockFromRegion(region: Region) {
         if (!track) return;
+        if (transcript?.blocks?.find((b) => b.id === region.id)) return;
         // Add a new block in the transcript
         setTranscript(
             (prev) =>

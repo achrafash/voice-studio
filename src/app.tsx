@@ -37,7 +37,11 @@ interface Track {
 }
 
 export default function App() {
-    const [transcript, setTranscript] = useState<Transcript>();
+    const [transcript, setTranscript] = useState<Transcript>({
+        blocks: [],
+        endTime: 0,
+        startTime: 0,
+    });
     const [track, setTrack] = useState<Track>();
     const [project, setProject] = useState<string>();
     const [activeBlockId, setActiveBlockId] = useState<string>();
@@ -73,11 +77,6 @@ export default function App() {
                 const data = Array.from(result.channelData[0]);
                 const startTime = 0;
                 const endTime = result.sampleRate * data.length;
-                setTranscript({
-                    startTime,
-                    endTime,
-                    blocks: [],
-                });
                 setTrack({
                     name: projectName,
                     duration: endTime - startTime,
@@ -93,7 +92,7 @@ export default function App() {
         onDrop: async (files) => {
             if (!files || files.length === 0) return;
             if (files[0].type === "application/json") {
-                regionsPlugin.clearRegions();
+                regionsPlugin?.clearRegions();
                 loadTranscriptFromFile(files[0]);
             }
         },
@@ -128,7 +127,7 @@ export default function App() {
                     barAlign: "bottom",
                     normalize: true,
                     height: 24,
-                    container: minimapRef.current ?? undefined,
+                    container: minimapRef?.current ?? undefined,
                 }),
             ];
         }, []),
@@ -262,7 +261,6 @@ export default function App() {
     }, [transcript]);
 
     function loadTranscriptFromFile(file: File) {
-        if (!track) return;
         const reader = new FileReader();
         reader.onload = (event) => {
             const content = event.target?.result as string;
@@ -275,14 +273,17 @@ export default function App() {
             };
 
             for (const block of data.blocks) {
-                const region = regionsPlugin.addRegion({
-                    id: block.id,
-                    start: block.from / 1_000,
-                    end: block.to / 1_000,
-                });
+                let region: Region | undefined;
+                if (regionsPlugin && wavesurfer) {
+                    region = regionsPlugin.addRegion({
+                        id: block.id,
+                        start: block.from / 1_000,
+                        end: block.to / 1_000,
+                    });
+                }
                 newTranscript.blocks.push({
                     ...block,
-                    id: block.id ?? region.id,
+                    id: block.id ?? region?.id,
                 });
             }
             newTranscript.blocks.sort((a, b) => a.from - b.from);

@@ -9,7 +9,7 @@ import RegionsPlugin, {
 
 import TextareaAutosize from "react-textarea-autosize";
 import { Icons } from "@/components";
-import { FileUp, Info } from "lucide-react";
+import { FileUp, FileX, Info } from "lucide-react";
 
 import Controls from "./controls";
 import * as wav from "./lib/wav";
@@ -390,37 +390,63 @@ export default function App() {
                                             transcriptDropzone.isDragActive
                                                 ? "border-solid border-amber-300 bg-amber-50/50"
                                                 : "border-dashed border-stone-100/80"
-                                        } ${transcriptDropzone.isFocused ? "!border-solid !border-amber-300 ring ring-orange-300/20 hover:!bg-transparent" : ""}`}
+                                        } ${transcriptDropzone.isFocused ? "!border-solid !border-amber-300 ring ring-orange-300/20 hover:!bg-transparent" : ""} ${
+                                            transcriptDropzone.isDragReject
+                                                ? "!border-solid !border-red-300 !bg-red-50 ring ring-red-300/20"
+                                                : ""
+                                        }`}
                                     >
                                         <input
                                             {...transcriptDropzone.getInputProps()}
                                         />
                                         <div className="select-none p-4 text-center">
                                             <div className="mx-auto mb-3 w-max">
-                                                <FileUp
-                                                    size={28}
-                                                    strokeWidth={1.5}
-                                                    className="text-stone-400"
-                                                />
+                                                {transcriptDropzone.isDragReject ? (
+                                                    <FileX
+                                                        size={28}
+                                                        strokeWidth={1.5}
+                                                        className="text-red-600/80"
+                                                    />
+                                                ) : (
+                                                    <FileUp
+                                                        size={28}
+                                                        strokeWidth={1.5}
+                                                        className="text-stone-400"
+                                                    />
+                                                )}
                                             </div>
-                                            <p className="mb-1 text-sm font-medium text-stone-600">
-                                                Drag & drop transcript here,{" "}
-                                                <button
-                                                    className="m-0 p-0 text-amber-600 underline underline-offset-2 focus:outline-none"
-                                                    tabIndex={-1}
-                                                >
-                                                    or click to browse
-                                                </button>
-                                            </p>
-                                            <div className="flex items-center justify-center space-x-1">
-                                                <Info
-                                                    size={15}
-                                                    className="text-stone-400"
-                                                />
-                                                <span className="inline-block text-xs font-medium text-stone-400">
-                                                    Supports JSON only
-                                                </span>
-                                            </div>
+                                            {transcriptDropzone.fileRejections
+                                                .length > 0 ? (
+                                                <p className="mb-1 text-sm font-medium text-red-700/70">
+                                                    {
+                                                        transcriptDropzone
+                                                            .fileRejections[0]
+                                                            .errors[0].message
+                                                    }
+                                                </p>
+                                            ) : (
+                                                <>
+                                                    <p className="mb-1 text-sm font-medium text-stone-600">
+                                                        Drag & drop transcript
+                                                        here,{" "}
+                                                        <button
+                                                            className={`m-0 p-0 ${trackDropzone.isDragReject ? "text-red-600/80" : "text-amber-600"} underline underline-offset-2 focus:outline-none`}
+                                                            tabIndex={-1}
+                                                        >
+                                                            or click to browse
+                                                        </button>
+                                                    </p>
+                                                    <div className="flex items-center justify-center space-x-1">
+                                                        <Info
+                                                            size={15}
+                                                            className="text-stone-400"
+                                                        />
+                                                        <span className="inline-block text-xs font-medium text-stone-400">
+                                                            Supports JSON only
+                                                        </span>
+                                                    </div>
+                                                </>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
@@ -524,36 +550,59 @@ export default function App() {
                                     trackDropzone.isDragActive
                                         ? "border-solid border-amber-300 bg-amber-50/50"
                                         : "border-dashed border-stone-100/80"
-                                } ${trackDropzone.isFocused ? "!border-solid !border-amber-300 ring ring-orange-300/20 hover:!bg-transparent" : ""}`}
+                                } ${trackDropzone.isFocused ? "!border-solid !border-amber-300 ring ring-orange-300/20 hover:!bg-transparent" : ""} ${
+                                    trackDropzone.isDragReject
+                                        ? "!border-solid !border-red-300 !bg-red-50 ring ring-red-300/20"
+                                        : ""
+                                }`}
                             >
                                 <input {...trackDropzone.getInputProps()} />
                                 <div className="select-none p-4 text-center">
                                     <div className="mx-auto mb-3 w-max">
-                                        <FileUp
-                                            size={28}
-                                            strokeWidth={1.5}
-                                            className="text-stone-400"
-                                        />
+                                        {trackDropzone.isDragReject ? (
+                                            <FileX
+                                                size={28}
+                                                strokeWidth={1.5}
+                                                className="text-red-600/80"
+                                            />
+                                        ) : (
+                                            <FileUp
+                                                size={28}
+                                                strokeWidth={1.5}
+                                                className="text-stone-400"
+                                            />
+                                        )}
                                     </div>
-                                    <p className="mb-1 text-sm font-medium text-stone-600">
-                                        Drag & drop audio file here,{" "}
-                                        <button
-                                            className="m-0 p-0 text-amber-600 underline underline-offset-2 focus:outline-none"
-                                            tabIndex={-1}
-                                        >
-                                            or click to browse
-                                        </button>
-                                    </p>
-                                    <div className="flex items-center justify-center space-x-1">
-                                        <Info
-                                            size={15}
-                                            className="text-stone-400"
-                                        />
-                                        <span className="inline-block text-xs font-medium text-stone-400">
-                                            Supports wav only (16kHz, 16-bit,
-                                            mono)
-                                        </span>
-                                    </div>
+                                    {trackDropzone.fileRejections.length > 0 ? (
+                                        <p className="mb-1 text-sm font-medium text-red-700/70">
+                                            {
+                                                trackDropzone.fileRejections[0]
+                                                    .errors[0].message
+                                            }
+                                        </p>
+                                    ) : (
+                                        <>
+                                            <p className="mb-1 text-sm font-medium text-stone-600">
+                                                Drag & drop audio file here,{" "}
+                                                <button
+                                                    className={`m-0 p-0 ${trackDropzone.isDragReject ? "text-red-600/80" : "text-amber-600"} underline underline-offset-2 focus:outline-none`}
+                                                    tabIndex={-1}
+                                                >
+                                                    or click to browse
+                                                </button>
+                                            </p>
+                                            <div className="flex items-center justify-center space-x-1">
+                                                <Info
+                                                    size={15}
+                                                    className="text-stone-400"
+                                                />
+                                                <span className="inline-block text-xs font-medium text-stone-400">
+                                                    Supports wav only (16kHz,
+                                                    16-bit, mono)
+                                                </span>
+                                            </div>
+                                        </>
+                                    )}
                                 </div>
                             </div>
                         </div>

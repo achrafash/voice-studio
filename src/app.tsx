@@ -380,16 +380,17 @@ export default function App() {
                     <div className="col-span-3 col-start-2 flex max-w-xl flex-col overflow-y-hidden border-x border-stone-200 bg-white xl:col-span-2 xl:col-start-2 xl:max-w-3xl">
                         <div
                             {...transcriptDropzone.getRootProps()}
-                            className="relative h-full w-full flex-1 overflow-y-hidden"
+                            className="group/dropzone relative h-full w-full flex-1 overflow-y-hidden focus:outline-none"
                         >
                             {(transcript?.blocks?.length === 0 ||
                                 transcriptDropzone.isDragActive) && (
-                                <div className="absolute inset-0 z-10 h-full bg-white/80 p-2">
+                                <div className="group absolute inset-0 z-10 h-full bg-white/80 p-2 group-focus/dropzone:border-solid group-focus/dropzone:outline-2">
                                     <div
-                                        className={`flex h-full w-full items-center justify-center rounded-lg border-2 border-dashed border-stone-100/80 ${
-                                            transcriptDropzone.isDragActive &&
-                                            "outline outline-2 outline-offset-2 outline-amber-300"
-                                        }`}
+                                        className={`flex h-full w-full items-center justify-center rounded-lg border-2 group-hover:border-solid group-hover:border-stone-100 group-hover:bg-stone-50/80 group-active:border-solid group-active:border-amber-300 ${
+                                            transcriptDropzone.isDragActive
+                                                ? "border-solid border-amber-300 bg-amber-50/50"
+                                                : "border-dashed border-stone-100/80"
+                                        } ${transcriptDropzone.isFocused ? "!border-solid !border-amber-300 ring ring-orange-300/20 hover:!bg-transparent" : ""}`}
                                     >
                                         <input
                                             {...transcriptDropzone.getInputProps()}
@@ -404,7 +405,10 @@ export default function App() {
                                             </div>
                                             <p className="mb-1 text-sm font-medium text-stone-600">
                                                 Drag & drop transcript here,{" "}
-                                                <button className="m-0 p-0 text-amber-600 underline underline-offset-2">
+                                                <button
+                                                    className="m-0 p-0 text-amber-600 underline underline-offset-2 focus:outline-none"
+                                                    tabIndex={-1}
+                                                >
                                                     or click to browse
                                                 </button>
                                             </p>
@@ -511,15 +515,16 @@ export default function App() {
                 {/* Player */}
                 <div
                     {...trackDropzone.getRootProps()}
-                    className="relative h-40 border-y border-stone-200 bg-white"
+                    className="group/dropzone relative h-40 border-y border-stone-200 bg-white focus:outline-none"
                 >
                     {(!track?.audio || trackDropzone.isDragActive) && (
-                        <div className="absolute inset-0 z-10 bg-white/80 p-2">
+                        <div className="group absolute inset-0 z-10 bg-white/80 p-2">
                             <div
-                                className={`flex h-full w-full items-center justify-center rounded-lg border-2 border-dashed border-stone-100/80 ${
-                                    trackDropzone.isDragActive &&
-                                    "outline outline-2 outline-offset-2 outline-amber-300"
-                                }`}
+                                className={`flex h-full w-full items-center justify-center rounded-lg border-2 group-hover:border-solid group-hover:border-stone-100 group-hover:bg-stone-50/80 group-active:border-solid group-active:border-amber-300 ${
+                                    trackDropzone.isDragActive
+                                        ? "border-solid border-amber-300 bg-amber-50/50"
+                                        : "border-dashed border-stone-100/80"
+                                } ${trackDropzone.isFocused ? "!border-solid !border-amber-300 ring ring-orange-300/20 hover:!bg-transparent" : ""}`}
                             >
                                 <input {...trackDropzone.getInputProps()} />
                                 <div className="select-none p-4 text-center">
@@ -532,7 +537,10 @@ export default function App() {
                                     </div>
                                     <p className="mb-1 text-sm font-medium text-stone-600">
                                         Drag & drop audio file here,{" "}
-                                        <button className="m-0 p-0 text-amber-600 underline underline-offset-2">
+                                        <button
+                                            className="m-0 p-0 text-amber-600 underline underline-offset-2 focus:outline-none"
+                                            tabIndex={-1}
+                                        >
                                             or click to browse
                                         </button>
                                     </p>

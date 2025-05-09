@@ -9,6 +9,7 @@ import RegionsPlugin, {
 
 import TextareaAutosize from "react-textarea-autosize";
 import { Icons } from "@/components";
+import { FileUp, Info } from "lucide-react";
 
 import Controls from "./controls";
 import * as wav from "./lib/wav";
@@ -393,13 +394,28 @@ export default function App() {
                                             {...transcriptDropzone.getInputProps()}
                                         />
                                         <div className="select-none p-4 text-center">
-                                            <p className="text-sm font-medium text-stone-600">
-                                                Drag and drop transcript file to
-                                                upload
+                                            <div className="mx-auto mb-3 w-max">
+                                                <FileUp
+                                                    size={28}
+                                                    strokeWidth={1.5}
+                                                    className="text-stone-400"
+                                                />
+                                            </div>
+                                            <p className="mb-1 text-sm font-medium text-stone-600">
+                                                Drag & drop transcript here,{" "}
+                                                <button className="m-0 p-0 text-amber-600 underline underline-offset-2">
+                                                    or click to browse
+                                                </button>
                                             </p>
-                                            <p className="text-sm text-stone-400">
-                                                Supports JSON files only
-                                            </p>
+                                            <div className="flex items-center justify-center space-x-1">
+                                                <Info
+                                                    size={15}
+                                                    className="text-stone-400"
+                                                />
+                                                <span className="inline-block text-xs font-medium text-stone-400">
+                                                    Supports JSON only
+                                                </span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -506,13 +522,29 @@ export default function App() {
                             >
                                 <input {...trackDropzone.getInputProps()} />
                                 <div className="select-none p-4 text-center">
-                                    <p className="text-sm font-medium text-stone-600">
-                                        Drag and drop audio file to upload
+                                    <div className="mx-auto mb-3 w-max">
+                                        <FileUp
+                                            size={28}
+                                            strokeWidth={1.5}
+                                            className="text-stone-400"
+                                        />
+                                    </div>
+                                    <p className="mb-1 text-sm font-medium text-stone-600">
+                                        Drag & drop audio file here,{" "}
+                                        <button className="m-0 p-0 text-amber-600 underline underline-offset-2">
+                                            or click to browse
+                                        </button>
                                     </p>
-                                    <p className="text-sm text-stone-400">
-                                        Supports wav files (16kHz, 16-bit, mono)
-                                        only
-                                    </p>
+                                    <div className="flex items-center justify-center space-x-1">
+                                        <Info
+                                            size={15}
+                                            className="text-stone-400"
+                                        />
+                                        <span className="inline-block text-xs font-medium text-stone-400">
+                                            Supports wav only (16kHz, 16-bit,
+                                            mono)
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
                         </div>

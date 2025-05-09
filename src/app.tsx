@@ -385,7 +385,7 @@ export default function App() {
                                 transcriptDropzone.isDragActive) && (
                                 <div className="absolute inset-0 z-10 h-full bg-white/80 p-2">
                                     <div
-                                        className={`flex h-full w-full items-center justify-center rounded-lg border-2 border-dashed border-stone-200/70 ${
+                                        className={`flex h-full w-full items-center justify-center rounded-lg border-2 border-dashed border-stone-100/80 ${
                                             transcriptDropzone.isDragActive &&
                                             "outline outline-2 outline-offset-2 outline-amber-300"
                                         }`}
@@ -515,7 +515,7 @@ export default function App() {
                     {(!track?.audio || trackDropzone.isDragActive) && (
                         <div className="absolute inset-0 z-10 bg-white/80 p-2">
                             <div
-                                className={`flex h-full w-full items-center justify-center rounded-lg border-2 border-dashed border-stone-200/50 ${
+                                className={`flex h-full w-full items-center justify-center rounded-lg border-2 border-dashed border-stone-100/80 ${
                                     trackDropzone.isDragActive &&
                                     "outline outline-2 outline-offset-2 outline-amber-300"
                                 }`}

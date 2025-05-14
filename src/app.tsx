@@ -2,7 +2,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useDropzone } from "react-dropzone";
 // Wavesurfer
 import { useWavesurfer } from "@wavesurfer/react";
-import MinimapPlugin from "wavesurfer.js/dist/plugins/minimap.esm.js";
 import RegionsPlugin, {
     Region,
 } from "wavesurfer.js/dist/plugins/regions.esm.js";
@@ -51,7 +50,6 @@ export default function App() {
     }, [activeBlockId]);
 
     const playerRef = useRef(null);
-    const minimapRef = useRef(null);
 
     const regionsPlugin = useMemo(() => {
         return new RegionsPlugin();
@@ -115,21 +113,7 @@ export default function App() {
         cursorWidth: 1.5,
         minPxPerSec: 10,
         plugins: useMemo(() => {
-            return [
-                regionsPlugin,
-                new MinimapPlugin({
-                    cursorWidth: 0,
-                    overlayColor: "transparent",
-                    waveColor: "#e7e5e4",
-                    progressColor: "#292524",
-                    barGap: 0,
-                    barWidth: 1.5,
-                    barAlign: "bottom",
-                    normalize: true,
-                    height: 24,
-                    container: minimapRef?.current ?? undefined,
-                }),
-            ];
+            return [regionsPlugin];
         }, []),
     });
 
@@ -611,11 +595,6 @@ export default function App() {
                     {track?.audio && (
                         <div className="flex flex-col space-y-4 p-2">
                             <div id="waveform" ref={playerRef} />
-                            <div
-                                id="minimap"
-                                ref={minimapRef}
-                                className="overflow-hidden rounded-lg border border-stone-200/50"
-                            />
                         </div>
                     )}
                 </div>

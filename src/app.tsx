@@ -1,13 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useDropzone } from "react-dropzone";
 // Wavesurfer
 import { useWavesurfer } from "@wavesurfer/react";
-import MinimapPlugin from "wavesurfer.js/dist/plugins/minimap.esm.js";
 import RegionsPlugin, {
     Region,
 } from "wavesurfer.js/dist/plugins/regions.esm.js";
 
 import TextareaAutosize from "react-textarea-autosize";
-import { Icons, Input, Label } from "@/components";
+import { Icons } from "@/components";
+import { FileUp, FileX, Info } from "lucide-react";
 
 import Controls from "./controls";
 import * as wav from "./lib/wav";
@@ -35,7 +36,11 @@ interface Track {
 }
 
 export default function App() {
-    const [transcript, setTranscript] = useState<Transcript>();
+    const [transcript, setTranscript] = useState<Transcript>({
+        blocks: [],
+        endTime: 0,
+        startTime: 0,
+    });
     const [track, setTrack] = useState<Track>();
     const [project, setProject] = useState<string>();
     const [activeBlockId, setActiveBlockId] = useState<string>();
@@ -45,11 +50,51 @@ export default function App() {
     }, [activeBlockId]);
 
     const playerRef = useRef(null);
-    const minimapRef = useRef(null);
 
     const regionsPlugin = useMemo(() => {
         return new RegionsPlugin();
     }, []);
+
+    const trackDropzone = useDropzone({
+        accept: { "audio/wav": [".wav"] },
+        maxFiles: 1,
+        onDrop: async (files) => {
+            if (!files || files.length === 0) return;
+            if (files[0].type === "audio/wav") {
+                const projectName = files[0].name
+                    .split(".")
+                    .slice(0, -1)
+                    .join(".");
+                setProject(projectName);
+                const arrayBuffer = await files[0].arrayBuffer();
+                const result = wav.decode(arrayBuffer);
+                if (!result) throw Error("Failed to load audio file");
+                if (result.sampleRate !== SAMPLE_RATE)
+                    throw Error("Invalid sample rate");
+
+                const data = Array.from(result.channelData[0]);
+                const startTime = 0;
+                const endTime = result.sampleRate * data.length;
+                setTrack({
+                    name: projectName,
+                    duration: endTime - startTime,
+                    audio: URL.createObjectURL(files[0]),
+                });
+            }
+        },
+    });
+
+    const transcriptDropzone = useDropzone({
+        accept: { "application/json": [".json"] },
+        maxFiles: 1,
+        onDrop: async (files) => {
+            if (!files || files.length === 0) return;
+            if (files[0].type === "application/json") {
+                regionsPlugin?.clearRegions();
+                loadTranscriptFromFile(files[0]);
+            }
+        },
+    });
 
     const { wavesurfer, isPlaying, currentTime } = useWavesurfer({
         url: track?.audio,
@@ -62,27 +107,13 @@ export default function App() {
         barGap: 1.5,
         barWidth: 1.5,
         barRadius: 2,
-        height: 100,
+        height: 120,
         autoCenter: true,
         cursorColor: "#dc2626",
         cursorWidth: 1.5,
         minPxPerSec: 10,
         plugins: useMemo(() => {
-            return [
-                regionsPlugin,
-                new MinimapPlugin({
-                    cursorWidth: 0,
-                    overlayColor: "transparent",
-                    waveColor: "#e7e5e4",
-                    progressColor: "#292524",
-                    barGap: 0,
-                    barWidth: 1.5,
-                    barAlign: "bottom",
-                    normalize: true,
-                    height: 24,
-                    container: minimapRef.current ?? undefined,
-                }),
-            ];
+            return [regionsPlugin];
         }, []),
     });
 
@@ -145,7 +176,6 @@ export default function App() {
                         start: (block.from - transcript.startTime) / 1000,
                         end: (block.to - transcript.startTime) / 1000,
                     });
-                    console.log(`created region #${block.id}`);
                 });
             }
         });
@@ -214,37 +244,7 @@ export default function App() {
         };
     }, [transcript]);
 
-    async function onUpload(e: React.ChangeEvent<HTMLInputElement>) {
-        const files = e.target.files;
-        if (!files || files.length === 0) return;
-
-        if (files[0].type === "audio/wav") {
-            const projectName = files[0].name.split(".").slice(0, -1).join(".");
-            setProject(projectName);
-            const arrayBuffer = await files[0].arrayBuffer();
-            const result = wav.decode(arrayBuffer);
-            if (!result) throw Error("Failed to load audio file");
-            if (result.sampleRate !== SAMPLE_RATE)
-                throw Error("Invalid sample rate");
-
-            const data = Array.from(result.channelData[0]);
-            const startTime = 0;
-            const endTime = result.sampleRate * data.length;
-            setTranscript({
-                startTime,
-                endTime,
-                blocks: [],
-            });
-            setTrack({
-                name: projectName,
-                duration: endTime - startTime,
-                audio: URL.createObjectURL(files[0]),
-            });
-        }
-    }
-
     function loadTranscriptFromFile(file: File) {
-        if (!track) return;
         const reader = new FileReader();
         reader.onload = (event) => {
             const content = event.target?.result as string;
@@ -257,14 +257,17 @@ export default function App() {
             };
 
             for (const block of data.blocks) {
-                const region = regionsPlugin.addRegion({
-                    id: block.id,
-                    start: block.from / 1_000,
-                    end: block.to / 1_000,
-                });
+                let region: Region | undefined;
+                if (regionsPlugin && wavesurfer) {
+                    region = regionsPlugin.addRegion({
+                        id: block.id,
+                        start: block.from / 1_000,
+                        end: block.to / 1_000,
+                    });
+                }
                 newTranscript.blocks.push({
                     ...block,
-                    id: block.id ?? region.id,
+                    id: block.id ?? region?.id,
                 });
             }
             newTranscript.blocks.sort((a, b) => a.from - b.from);
@@ -275,6 +278,7 @@ export default function App() {
 
     function createBlockFromRegion(region: Region) {
         if (!track) return;
+        if (transcript?.blocks?.find((b) => b.id === region.id)) return;
         // Add a new block in the transcript
         setTranscript(
             (prev) =>
@@ -299,18 +303,7 @@ export default function App() {
     return (
         <div className="flex h-screen flex-col overflow-hidden bg-stone-50">
             <header className="grid grid-cols-3 border-b border-stone-200 bg-white">
-                <div className="flex items-center px-4 py-2">
-                    <button className="relative cursor-default rounded-md border border-stone-200 px-4 py-1.5 text-xs font-medium text-stone-800 hover:bg-stone-200/20 active:border-amber-400 active:ring-2 active:ring-amber-200/50">
-                        Import audio
-                        <input
-                            className="absolute inset-0 opacity-0"
-                            type="file"
-                            name="project"
-                            multiple
-                            onChange={(e) => onUpload(e)}
-                        />
-                    </button>
-                </div>
+                <div />
                 <div className="flex items-center justify-center space-x-1 p-2 text-xs">
                     <div className="w-full rounded-md border border-stone-200 px-3 py-1.5 shadow-sm">
                         <input
@@ -366,138 +359,244 @@ export default function App() {
             </header>
             {/* Main Area */}
             <div className="flex h-full flex-grow flex-col overflow-hidden">
-                <div className="grid flex-1 grid-cols-4 gap-x-4 overflow-y-auto px-4">
+                <div className="grid flex-1 grid-cols-4 gap-x-4 overflow-y-hidden px-4">
                     {/* Editor */}
-                    <div className="col-span-3 col-start-2 flex max-w-xl flex-col overflow-y-auto border-x border-stone-200 bg-white xl:col-span-2 xl:col-start-2 xl:max-w-3xl">
-                        <div className="relative w-full flex-1 space-y-0.5 divide-y divide-stone-50 py-8">
-                            {transcript?.blocks?.length === 0 && (
-                                <div className="absolute inset-0 mx-auto flex w-max flex-col justify-center space-y-2 text-sm">
-                                    <Label htmlFor="transcript">
-                                        Already have a transcript? Start from
-                                        there!
-                                    </Label>
-                                    <Input
-                                        type="file"
-                                        accept="json"
-                                        name="transcript"
-                                        id="transcript"
-                                        className="text-sm"
-                                        onChange={(e) => {
-                                            if (
-                                                !e.target.files ||
-                                                e.target.files.length === 0
-                                            )
-                                                return;
-                                            const file = e.target.files[0];
-                                            if (
-                                                file.type !== "application/json"
-                                            )
-                                                return;
-                                            loadTranscriptFromFile(file);
-                                        }}
-                                    />
+                    <div className="col-span-3 col-start-2 flex max-w-xl flex-col overflow-y-hidden border-x border-stone-200 bg-white xl:col-span-2 xl:col-start-2 xl:max-w-3xl">
+                        <div
+                            {...transcriptDropzone.getRootProps()}
+                            className="group/dropzone relative h-full w-full flex-1 overflow-y-hidden focus:outline-none"
+                        >
+                            {(transcript?.blocks?.length === 0 ||
+                                transcriptDropzone.isDragActive) && (
+                                <div className="group absolute inset-0 z-10 h-full bg-white/80 p-2 group-focus/dropzone:border-solid group-focus/dropzone:outline-2">
+                                    <div
+                                        className={`flex h-full w-full items-center justify-center rounded-lg border-2 group-hover:border-solid group-hover:border-stone-100 group-hover:bg-stone-50/80 group-active:border-solid group-active:border-amber-300 ${
+                                            transcriptDropzone.isDragActive
+                                                ? "border-solid border-amber-300 bg-amber-50/50"
+                                                : "border-dashed border-stone-100/80"
+                                        } ${transcriptDropzone.isFocused ? "!border-solid !border-amber-300 ring ring-orange-300/20 hover:!bg-transparent" : ""} ${
+                                            transcriptDropzone.isDragReject
+                                                ? "!border-solid !border-red-300 !bg-red-50 ring ring-red-300/20"
+                                                : ""
+                                        }`}
+                                    >
+                                        <input
+                                            {...transcriptDropzone.getInputProps()}
+                                        />
+                                        <div className="select-none p-4 text-center">
+                                            <div className="mx-auto mb-3 w-max">
+                                                {transcriptDropzone.isDragReject ? (
+                                                    <FileX
+                                                        size={28}
+                                                        strokeWidth={1.5}
+                                                        className="text-red-600/80"
+                                                    />
+                                                ) : (
+                                                    <FileUp
+                                                        size={28}
+                                                        strokeWidth={1.5}
+                                                        className="text-stone-400"
+                                                    />
+                                                )}
+                                            </div>
+                                            {transcriptDropzone.fileRejections
+                                                .length > 0 ? (
+                                                <p className="mb-1 text-sm font-medium text-red-700/70">
+                                                    {
+                                                        transcriptDropzone
+                                                            .fileRejections[0]
+                                                            .errors[0].message
+                                                    }
+                                                </p>
+                                            ) : (
+                                                <>
+                                                    <p className="mb-1 text-sm font-medium text-stone-600">
+                                                        Drag & drop transcript
+                                                        here,{" "}
+                                                        <button
+                                                            className={`m-0 p-0 ${trackDropzone.isDragReject ? "text-red-600/80" : "text-amber-600"} underline underline-offset-2 focus:outline-none`}
+                                                            tabIndex={-1}
+                                                        >
+                                                            or click to browse
+                                                        </button>
+                                                    </p>
+                                                    <div className="flex items-center justify-center space-x-1">
+                                                        <Info
+                                                            size={15}
+                                                            className="text-stone-400"
+                                                        />
+                                                        <span className="inline-block text-xs font-medium text-stone-400">
+                                                            Supports JSON only
+                                                        </span>
+                                                    </div>
+                                                </>
+                                            )}
+                                        </div>
+                                    </div>
                                 </div>
                             )}
 
-                            {transcript?.blocks.map((currentBlock) => (
-                                <div
-                                    key={currentBlock.id}
-                                    tabIndex={0}
-                                    onFocus={() =>
-                                        setActiveBlockId(currentBlock.id)
-                                    }
-                                    className="group relative rounded outline outline-1 -outline-offset-1 outline-transparent ring-2 ring-transparent focus-within:outline-amber-400 focus-within:ring-orange-300/20 hover:outline-amber-400 hover:ring-orange-300/20"
-                                >
-                                    <div className="absolute left-2 top-0">
-                                        <input
-                                            type="text"
-                                            name="speaker"
-                                            className="max-w-[10ch] -translate-y-2/3 rounded-sm border border-stone-50 bg-white/50 px-1 py-0.5 text-xs text-stone-400 ring-orange-300/20 backdrop-blur-[2px] focus:visible focus:border-amber-400 focus:text-stone-600 focus:outline-none focus:ring-2"
-                                            defaultValue={
-                                                currentBlock.speaker_id
-                                            }
-                                            onChange={(e) => {
-                                                setTranscript(
-                                                    (prev) =>
-                                                        prev && {
-                                                            ...prev,
-                                                            blocks: prev.blocks.map(
-                                                                (block) =>
-                                                                    block.id !==
-                                                                    currentBlock.id
-                                                                        ? block
-                                                                        : {
-                                                                              ...currentBlock,
-                                                                              speaker_id:
-                                                                                  e
-                                                                                      .target
-                                                                                      .value,
-                                                                          },
-                                                            ),
-                                                        },
-                                                );
-                                            }}
-                                        />
+                            {transcript?.blocks &&
+                                transcript?.blocks.length > 0 && (
+                                    <div className="h-full overflow-y-auto py-8">
+                                        {transcript?.blocks.map(
+                                            (currentBlock) => (
+                                                <div
+                                                    key={currentBlock.id}
+                                                    tabIndex={0}
+                                                    onFocus={() =>
+                                                        setActiveBlockId(
+                                                            currentBlock.id,
+                                                        )
+                                                    }
+                                                    className="group relative rounded outline outline-1 -outline-offset-1 outline-transparent ring-2 ring-transparent focus-within:outline-amber-400 focus-within:ring-orange-300/20 hover:outline-amber-400 hover:ring-orange-300/20"
+                                                >
+                                                    <div className="absolute left-2 top-0">
+                                                        <input
+                                                            type="text"
+                                                            name="speaker"
+                                                            className="max-w-[10ch] -translate-y-2/3 rounded-sm border border-stone-50 bg-white/50 px-1 py-0.5 text-xs text-stone-400 ring-orange-300/20 backdrop-blur-[2px] focus:visible focus:border-amber-400 focus:text-stone-600 focus:outline-none focus:ring-2"
+                                                            defaultValue={
+                                                                currentBlock.speaker_id
+                                                            }
+                                                            onChange={(e) => {
+                                                                setTranscript(
+                                                                    (prev) =>
+                                                                        prev && {
+                                                                            ...prev,
+                                                                            blocks: prev.blocks.map(
+                                                                                (
+                                                                                    block,
+                                                                                ) =>
+                                                                                    block.id !==
+                                                                                    currentBlock.id
+                                                                                        ? block
+                                                                                        : {
+                                                                                              ...currentBlock,
+                                                                                              speaker_id:
+                                                                                                  e
+                                                                                                      .target
+                                                                                                      .value,
+                                                                                          },
+                                                                            ),
+                                                                        },
+                                                                );
+                                                            }}
+                                                        />
+                                                    </div>
+                                                    <TextareaAutosize
+                                                        minRows={1}
+                                                        name="transcription"
+                                                        defaultValue={
+                                                            currentBlock.text
+                                                        }
+                                                        onChange={(e) => {
+                                                            setTranscript(
+                                                                (prev) =>
+                                                                    prev && {
+                                                                        ...prev,
+                                                                        blocks: prev.blocks.map(
+                                                                            (
+                                                                                block,
+                                                                            ) =>
+                                                                                block.id !==
+                                                                                currentBlock.id
+                                                                                    ? block
+                                                                                    : {
+                                                                                          ...currentBlock,
+                                                                                          text: e
+                                                                                              .target
+                                                                                              .value,
+                                                                                      },
+                                                                        ),
+                                                                    },
+                                                            );
+                                                        }}
+                                                        className={`mx-auto flex w-full max-w-2xl resize-none rounded-lg bg-white pb-5 pl-6 pr-8 pt-4 text-sm text-stone-800 focus:outline-none ${activeBlockId === currentBlock.id ? "text-opacity-100" : "text-opacity-50"}`}
+                                                    />
+                                                </div>
+                                            ),
+                                        )}
                                     </div>
-                                    <TextareaAutosize
-                                        minRows={1}
-                                        name="transcription"
-                                        defaultValue={currentBlock.text}
-                                        onChange={(e) => {
-                                            setTranscript(
-                                                (prev) =>
-                                                    prev && {
-                                                        ...prev,
-                                                        blocks: prev.blocks.map(
-                                                            (block) =>
-                                                                block.id !==
-                                                                currentBlock.id
-                                                                    ? block
-                                                                    : {
-                                                                          ...currentBlock,
-                                                                          text: e
-                                                                              .target
-                                                                              .value,
-                                                                      },
-                                                        ),
-                                                    },
-                                            );
-                                        }}
-                                        className={`mx-auto flex w-full max-w-2xl resize-none rounded-lg bg-white pb-5 pl-6 pr-8 pt-4 text-sm text-stone-800 focus:outline-none ${activeBlockId === currentBlock.id ? "text-opacity-100" : "text-opacity-50"}`}
-                                    />
-                                </div>
-                            ))}
+                                )}
                         </div>
-                        <footer className="w-full border-t border-stone-200 bg-stone-50 p-2">
-                            <button
-                                title="Create a new block"
-                                disabled={!track?.audio || !transcript}
-                                onClick={() => {
-                                    const region = regionsPlugin.addRegion({
-                                        start: currentTime,
-                                        end: currentTime + 5,
-                                        resize: true,
-                                        drag: true,
-                                    });
-                                    createBlockFromRegion(region);
-                                }}
-                                className="flex cursor-default items-center rounded-sm border border-stone-200 px-1.5 py-0.5 pr-2 text-stone-600"
-                            >
-                                <Icons.Plus size={12} />
-                                &nbsp;
-                                <span className="text-xs">new block</span>
-                            </button>
-                        </footer>
                     </div>
                 </div>
                 {/* Player */}
-                <div className="flex flex-col space-y-4 border-y border-stone-200 px-4 py-2">
-                    <div id="waveform" ref={playerRef} />
-                    <div
-                        id="minimap"
-                        ref={minimapRef}
-                        className="overflow-hidden rounded-lg border border-stone-200/50"
-                    />
+                <div
+                    {...trackDropzone.getRootProps()}
+                    className="group/dropzone relative h-[140px] border-y border-stone-200 bg-white focus:outline-none"
+                >
+                    {(!track?.audio || trackDropzone.isDragActive) && (
+                        <div className="group absolute inset-0 z-10 bg-white/80 p-2">
+                            <div
+                                className={`flex h-full w-full items-center justify-center rounded-lg border-2 group-hover:border-solid group-hover:border-stone-100 group-hover:bg-stone-50/80 group-active:border-solid group-active:border-amber-300 ${
+                                    trackDropzone.isDragActive
+                                        ? "border-solid border-amber-300 bg-amber-50/50"
+                                        : "border-dashed border-stone-100/80"
+                                } ${trackDropzone.isFocused ? "!border-solid !border-amber-300 ring ring-orange-300/20 hover:!bg-transparent" : ""} ${
+                                    trackDropzone.isDragReject
+                                        ? "!border-solid !border-red-300 !bg-red-50 ring ring-red-300/20"
+                                        : ""
+                                }`}
+                            >
+                                <input {...trackDropzone.getInputProps()} />
+                                <div className="select-none p-4 text-center">
+                                    <div className="mx-auto mb-3 w-max">
+                                        {trackDropzone.isDragReject ? (
+                                            <FileX
+                                                size={28}
+                                                strokeWidth={1.5}
+                                                className="text-red-600/80"
+                                            />
+                                        ) : (
+                                            <FileUp
+                                                size={28}
+                                                strokeWidth={1.5}
+                                                className="text-stone-400"
+                                            />
+                                        )}
+                                    </div>
+                                    {trackDropzone.fileRejections.length > 0 ? (
+                                        <p className="mb-1 text-sm font-medium text-red-700/70">
+                                            {
+                                                trackDropzone.fileRejections[0]
+                                                    .errors[0].message
+                                            }
+                                        </p>
+                                    ) : (
+                                        <>
+                                            <p className="mb-1 text-sm font-medium text-stone-600">
+                                                Drag & drop audio file here,{" "}
+                                                <button
+                                                    className={`m-0 p-0 ${trackDropzone.isDragReject ? "text-red-600/80" : "text-amber-600"} underline underline-offset-2 focus:outline-none`}
+                                                    tabIndex={-1}
+                                                >
+                                                    or click to browse
+                                                </button>
+                                            </p>
+                                            <div className="flex items-center justify-center space-x-1">
+                                                <Info
+                                                    size={15}
+                                                    className="text-stone-400"
+                                                />
+                                                <span className="inline-block text-xs font-medium text-stone-400">
+                                                    Supports wav only (16kHz,
+                                                    16-bit, mono)
+                                                </span>
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {track?.audio && (
+                        <div className="flex h-full flex-col justify-end">
+                            <div id="waveform" ref={playerRef} />
+                        </div>
+                    )}
                 </div>
                 {/* Controls */}
                 <Controls

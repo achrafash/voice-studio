@@ -107,7 +107,7 @@ export default function App() {
         barGap: 1.5,
         barWidth: 1.5,
         barRadius: 2,
-        height: 100,
+        height: 120,
         autoCenter: true,
         cursorColor: "#dc2626",
         cursorWidth: 1.5,
@@ -525,7 +525,7 @@ export default function App() {
                 {/* Player */}
                 <div
                     {...trackDropzone.getRootProps()}
-                    className="group/dropzone relative h-40 border-y border-stone-200 bg-white focus:outline-none"
+                    className="group/dropzone relative h-[140px] border-y border-stone-200 bg-white focus:outline-none"
                 >
                     {(!track?.audio || trackDropzone.isDragActive) && (
                         <div className="group absolute inset-0 z-10 bg-white/80 p-2">
@@ -593,7 +593,7 @@ export default function App() {
                     )}
 
                     {track?.audio && (
-                        <div className="flex flex-col space-y-4 p-2">
+                        <div className="flex h-full flex-col justify-end">
                             <div id="waveform" ref={playerRef} />
                         </div>
                     )}

@@ -55,11 +55,17 @@ export default function App() {
     }, []);
 
     const trackDropzone = useDropzone({
-        accept: { "audio/wav": [".wav"] },
+        accept: {
+            "audio/wav": [".wav"],
+            "audio/x-m4a": [".m4a"],
+        },
         maxFiles: 1,
         onDrop: async (files) => {
             if (!files || files.length === 0) return;
-            if (files[0].type === "audio/wav") {
+            if (
+                files[0].type === "audio/wav" ||
+                files[0].type === "audio/x-m4a"
+            ) {
                 const projectName = files[0].name
                     .split(".")
                     .slice(0, -1)
@@ -580,7 +586,7 @@ export default function App() {
                                                     className="text-stone-400"
                                                 />
                                                 <span className="inline-block text-xs font-medium text-stone-400">
-                                                    Supports WAV only (16kHz,
+                                                    Supports WAV and M4A (16kHz,
                                                     16-bit, mono)
                                                 </span>
                                             </div>

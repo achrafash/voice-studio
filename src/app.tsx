@@ -312,16 +312,16 @@ export default function App() {
             <header className="grid grid-cols-3 border-b border-stone-200 bg-white">
                 <div />
                 <div className="flex items-center justify-center space-x-1 p-2 text-xs">
-                    <div className="w-full rounded-md border border-stone-200 px-3 py-1.5 shadow-sm">
+                    <div className="w-full rounded-md border border-stone-200 px-3 py-1.5 shadow-xs">
                         <input
                             placeholder={"Untitled"}
                             defaultValue={project}
-                            className="w-full text-center text-xs text-stone-800 focus:outline-none"
+                            className="w-full text-center text-xs text-stone-800 focus:outline-hidden"
                         />
                     </div>
                 </div>
                 <div className="flex justify-end px-4 py-2">
-                    <div className="flex items-stretch divide-x divide-stone-200 overflow-hidden rounded-md border border-stone-200 bg-white focus-within:border-amber-400 focus-within:outline focus-within:outline-2 focus-within:outline-orange-300/20">
+                    <div className="flex items-stretch divide-x divide-stone-200 overflow-hidden rounded-md border border-stone-200 bg-white focus-within:border-amber-400 focus-within:outline-solid focus-within:outline-2 focus-within:outline-orange-300/20">
                         <button
                             disabled={!transcript}
                             onClick={() => {
@@ -365,13 +365,13 @@ export default function App() {
                 </div>
             </header>
             {/* Main Area */}
-            <div className="flex h-full flex-grow flex-col overflow-hidden">
+            <div className="flex h-full grow flex-col overflow-hidden">
                 <div className="grid flex-1 grid-cols-4 gap-x-4 overflow-y-hidden px-4">
                     {/* Editor */}
                     <div className="col-span-3 col-start-2 flex max-w-xl flex-col overflow-y-hidden border-x border-stone-200 bg-white xl:col-span-2 xl:col-start-2 xl:max-w-3xl">
                         <div
                             {...transcriptDropzone.getRootProps()}
-                            className="group/dropzone relative h-full w-full flex-1 overflow-y-hidden focus:outline-none"
+                            className="group/dropzone relative h-full w-full flex-1 overflow-y-hidden focus:outline-hidden"
                         >
                             {(transcript?.blocks?.length === 0 ||
                                 transcriptDropzone.isDragActive) && (
@@ -381,9 +381,9 @@ export default function App() {
                                             transcriptDropzone.isDragActive
                                                 ? "border-solid border-amber-300 bg-amber-50/50"
                                                 : "border-dashed border-stone-100/80"
-                                        } ${transcriptDropzone.isFocused ? "!border-solid !border-amber-300 ring ring-orange-300/20 hover:!bg-transparent" : ""} ${
+                                        } ${transcriptDropzone.isFocused ? "border-solid! border-amber-300! ring-3 ring-orange-300/20 hover:bg-transparent!" : ""} ${
                                             transcriptDropzone.isDragReject
-                                                ? "!border-solid !border-red-300 !bg-red-50 ring ring-red-300/20"
+                                                ? "border-solid! border-red-300! bg-red-50! ring-3 ring-red-300/20"
                                                 : ""
                                         }`}
                                     >
@@ -421,7 +421,7 @@ export default function App() {
                                                         Drag & drop transcript
                                                         here,{" "}
                                                         <button
-                                                            className={`m-0 p-0 ${trackDropzone.isDragReject ? "text-red-600/80" : "text-amber-600"} underline underline-offset-2 focus:outline-none`}
+                                                            className={`m-0 p-0 ${trackDropzone.isDragReject ? "text-red-600/80" : "text-amber-600"} underline underline-offset-2 focus:outline-hidden`}
                                                             tabIndex={-1}
                                                         >
                                                             or click to browse
@@ -456,13 +456,13 @@ export default function App() {
                                                             currentBlock.id,
                                                         )
                                                     }
-                                                    className="group relative rounded outline outline-1 -outline-offset-1 outline-transparent ring-2 ring-transparent focus-within:outline-amber-400 focus-within:ring-orange-300/20 hover:outline-amber-400 hover:ring-orange-300/20"
+                                                    className="group relative rounded outline-solid outline-1 -outline-offset-1 outline-transparent ring-2 ring-transparent focus-within:outline-amber-400 focus-within:ring-orange-300/20 hover:outline-amber-400 hover:ring-orange-300/20"
                                                 >
                                                     <div className="absolute left-2 top-0">
                                                         <input
                                                             type="text"
                                                             name="speaker"
-                                                            className="max-w-[10ch] -translate-y-2/3 rounded-sm border border-stone-50 bg-white/50 px-1 py-0.5 text-xs text-stone-400 ring-orange-300/20 backdrop-blur-[2px] focus:visible focus:border-amber-400 focus:text-stone-600 focus:outline-none focus:ring-2"
+                                                            className="max-w-[10ch] -translate-y-2/3 rounded-sm border border-stone-50 bg-white/50 px-1 py-0.5 text-xs text-stone-400 ring-orange-300/20 backdrop-blur-[2px] focus:visible focus:border-amber-400 focus:text-stone-600 focus:outline-hidden focus:ring-2"
                                                             defaultValue={
                                                                 currentBlock.speaker_id
                                                             }
@@ -519,7 +519,7 @@ export default function App() {
                                                                     },
                                                             );
                                                         }}
-                                                        className={`mx-auto flex w-full max-w-2xl resize-none rounded-lg bg-white pb-5 pl-6 pr-8 pt-4 text-sm text-stone-800 focus:outline-none ${activeBlockId === currentBlock.id ? "text-opacity-100" : "text-opacity-50"}`}
+                                                        className={`mx-auto flex w-full max-w-2xl resize-none rounded-lg bg-white pb-5 pl-6 pr-8 pt-4 text-sm text-stone-800 focus:outline-hidden ${activeBlockId === currentBlock.id ? "text-opacity-100" : "text-opacity-50"}`}
                                                     />
                                                 </div>
                                             ),
@@ -532,7 +532,7 @@ export default function App() {
                 {/* Player */}
                 <div
                     {...trackDropzone.getRootProps()}
-                    className="group/dropzone relative h-[140px] border-y border-stone-200 bg-white focus:outline-none"
+                    className="group/dropzone relative h-[140px] border-y border-stone-200 bg-white focus:outline-hidden"
                 >
                     {(!track?.audio || trackDropzone.isDragActive) && (
                         <div className="group absolute inset-0 z-10 bg-white/80 p-2">
@@ -541,9 +541,9 @@ export default function App() {
                                     trackDropzone.isDragActive
                                         ? "border-solid border-amber-300 bg-amber-50/50"
                                         : "border-dashed border-stone-100/80"
-                                } ${trackDropzone.isFocused ? "!border-solid !border-amber-300 ring ring-orange-300/20 hover:!bg-transparent" : ""} ${
+                                } ${trackDropzone.isFocused ? "border-solid! border-amber-300! ring-3 ring-orange-300/20 hover:bg-transparent!" : ""} ${
                                     trackDropzone.isDragReject
-                                        ? "!border-solid !border-red-300 !bg-red-50 ring ring-red-300/20"
+                                        ? "border-solid! border-red-300! bg-red-50! ring-3 ring-red-300/20"
                                         : ""
                                 }`}
                             >
@@ -576,7 +576,7 @@ export default function App() {
                                             <p className="mb-1 text-sm font-medium text-stone-600">
                                                 Drag & drop audio file here,{" "}
                                                 <button
-                                                    className={`m-0 p-0 ${trackDropzone.isDragReject ? "text-red-600/80" : "text-amber-600"} underline underline-offset-2 focus:outline-none`}
+                                                    className={`m-0 p-0 ${trackDropzone.isDragReject ? "text-red-600/80" : "text-amber-600"} underline underline-offset-2 focus:outline-hidden`}
                                                     tabIndex={-1}
                                                 >
                                                     or click to browse

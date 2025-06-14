@@ -71,7 +71,7 @@ export default function Controls(props: ControlsProps) {
                             setZoomLevel(value[0]);
                             props.onChange({ zoom: value });
                         }}
-                        className="flex-grow"
+                        className="grow"
                     />
                     <button>+</button>
                 </div>
@@ -111,7 +111,7 @@ export default function Controls(props: ControlsProps) {
             <div className="ml-auto flex h-full items-center space-x-2 rounded-full border border-stone-200 bg-white px-3 font-mono text-xs text-stone-600">
                 <input
                     type="text"
-                    className="w-[3rem] focus:outline-none"
+                    className="w-12 focus:outline-hidden"
                     value={props.currentTime.toFixed(2)}
                     onChange={(e) => {
                         props.onChange({ time: Number(e.target.value) });

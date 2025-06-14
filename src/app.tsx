@@ -11,7 +11,6 @@ import { Icons } from "@/components";
 import { FileUp, FileX, Info } from "lucide-react";
 
 import Controls from "./controls";
-import * as wav from "./lib/wav";
 
 const SAMPLE_RATE = 16_000;
 
@@ -66,15 +65,15 @@ export default function App() {
                     .slice(0, -1)
                     .join(".");
                 setProject(projectName);
-                const arrayBuffer = await files[0].arrayBuffer();
-                const result = wav.decode(arrayBuffer);
-                if (!result) throw Error("Failed to load audio file");
-                if (result.sampleRate !== SAMPLE_RATE)
-                    throw Error("Invalid sample rate");
 
-                const data = Array.from(result.channelData[0]);
+                const audioContext = new AudioContext();
+                const arrayBuffer = await files[0].arrayBuffer();
+                const audioBuffer =
+                    await audioContext.decodeAudioData(arrayBuffer);
+
                 const startTime = 0;
-                const endTime = result.sampleRate * data.length;
+                const endTime = audioBuffer.duration * SAMPLE_RATE;
+
                 setTrack({
                     name: projectName,
                     duration: endTime - startTime,
@@ -581,7 +580,7 @@ export default function App() {
                                                     className="text-stone-400"
                                                 />
                                                 <span className="inline-block text-xs font-medium text-stone-400">
-                                                    Supports wav only (16kHz,
+                                                    Supports WAV only (16kHz,
                                                     16-bit, mono)
                                                 </span>
                                             </div>

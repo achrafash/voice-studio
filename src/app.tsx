@@ -64,6 +64,8 @@ export default function App() {
             if (!files || files.length === 0) return;
             if (
                 files[0].type === "audio/wav" ||
+                files[0].type === "audio/wave" ||
+                files[0].type === "audio/x-wav" ||
                 files[0].type === "audio/x-m4a"
             ) {
                 const projectName = files[0].name

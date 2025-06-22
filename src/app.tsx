@@ -346,67 +346,13 @@ export default function App() {
 
     return (
         <div className="flex h-screen flex-col overflow-hidden bg-stone-50">
-            <header className="grid grid-cols-3 border-b border-stone-200 bg-white">
-                <div />
-                <div className="flex items-center justify-center space-x-1 p-2 text-xs">
-                    <div className="w-full rounded-md border border-stone-200 px-3 py-1.5 shadow-xs">
-                        <input
-                            placeholder={"Untitled"}
-                            defaultValue={project}
-                            className="w-full text-center text-xs text-stone-800 focus:outline-hidden"
-                        />
-                    </div>
-                </div>
-                <div className="flex justify-end px-4 py-2">
-                    <div className="flex items-stretch divide-x divide-stone-200 overflow-hidden rounded-md border border-stone-200 bg-white focus-within:border-amber-400 focus-within:outline-2 focus-within:outline-orange-300/20 focus-within:outline-solid">
-                        <button
-                            disabled={!transcript}
-                            onClick={() => {
-                                if (!transcript) return;
-                                const blob = new Blob(
-                                    [JSON.stringify(transcript, null, 4)],
-                                    { type: "application/json" },
-                                );
-                                const url = URL.createObjectURL(blob);
-                                const a = document.createElement("a");
-                                a.href = url;
-                                a.download = "groundTruth-transcript.json";
-                                document.body.appendChild(a);
-                                a.click();
-                                document.body.removeChild(a);
-                                URL.revokeObjectURL(url);
-                            }}
-                            className="cursor-default px-3 py-1.5 text-xs font-medium text-stone-800 focus:bg-amber-100/50 focus:text-amber-950"
-                        >
-                            <span>Export</span>
-                        </button>
-                        <button
-                            disabled={!transcript}
-                            onClick={async () => {
-                                if (!transcript) return;
-                                await navigator.clipboard.writeText(
-                                    JSON.stringify(transcript, null, 4),
-                                );
-                                alert(
-                                    "The transcript was copied to your clipboard.",
-                                );
-                            }}
-                            className="cursor-default p-1.5 focus:bg-amber-100/50"
-                        >
-                            <Icons.Clipboard
-                                size={14}
-                                className="text-stone-700"
-                            />
-                        </button>
-                    </div>
-                </div>
-            </header>
+            <header className="grid grid-cols-3 border-b border-stone-200 bg-white"></header>
             {/* Main Area */}
             <div className="flex h-full grow overflow-hidden">
                 <div className="flex h-full grow flex-col overflow-hidden">
-                    <div className="grid flex-1 grid-cols-4 gap-x-4 overflow-y-hidden px-4">
+                    <div className="grid flex-1 grid-cols-4 gap-x-4 overflow-y-hidden px-4 pt-4">
                         {/* Editor */}
-                        <div className="col-span-3 col-start-2 flex max-w-xl flex-col overflow-y-hidden border-x border-stone-200 bg-white xl:col-span-2 xl:col-start-2 xl:max-w-3xl">
+                        <div className="col-span-3 col-start-2 flex max-w-xl flex-col overflow-y-hidden rounded-t-lg border-x border-t border-stone-200 bg-white xl:col-span-2 xl:col-start-2 xl:max-w-3xl">
                             <div
                                 {...transcriptDropzone.getRootProps()}
                                 className="group/dropzone relative h-full w-full flex-1 overflow-y-hidden focus:outline-hidden"
@@ -753,6 +699,56 @@ export default function App() {
                         {...contextMenuDropzone.getRootProps()}
                         className="relative h-full w-full"
                     >
+                        <div className="border-b border-stone-200 p-4">
+                            <div className="flex items-stretch divide-x divide-stone-200 overflow-hidden rounded-md border border-b border-stone-200 bg-white focus-within:border-amber-400 focus-within:outline-2 focus-within:outline-orange-300/20 focus-within:outline-solid">
+                                <button
+                                    disabled={!transcript}
+                                    onClick={() => {
+                                        if (!transcript) return;
+                                        const blob = new Blob(
+                                            [
+                                                JSON.stringify(
+                                                    transcript,
+                                                    null,
+                                                    4,
+                                                ),
+                                            ],
+                                            { type: "application/json" },
+                                        );
+                                        const url = URL.createObjectURL(blob);
+                                        const a = document.createElement("a");
+                                        a.href = url;
+                                        a.download =
+                                            "groundTruth-transcript.json";
+                                        document.body.appendChild(a);
+                                        a.click();
+                                        document.body.removeChild(a);
+                                        URL.revokeObjectURL(url);
+                                    }}
+                                    className="grow cursor-default px-3 py-1.5 text-xs font-medium text-stone-800 focus:bg-amber-100/50 focus:text-amber-950"
+                                >
+                                    <span>Export</span>
+                                </button>
+                                <button
+                                    disabled={!transcript}
+                                    onClick={async () => {
+                                        if (!transcript) return;
+                                        await navigator.clipboard.writeText(
+                                            JSON.stringify(transcript, null, 4),
+                                        );
+                                        alert(
+                                            "The transcript was copied to your clipboard.",
+                                        );
+                                    }}
+                                    className="cursor-default p-1.5 focus:bg-amber-100/50"
+                                >
+                                    <Icons.Clipboard
+                                        size={14}
+                                        className="text-stone-700"
+                                    />
+                                </button>
+                            </div>
+                        </div>
                         <div className="flex h-full flex-col overflow-hidden p-4">
                             <label
                                 htmlFor="transcript-offset"

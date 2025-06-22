@@ -105,6 +105,24 @@ export default function App() {
         },
     });
 
+    const contextMenuDropzone = useDropzone({
+        accept: { "application/json": [".json"] },
+        maxFiles: 1,
+        onDrop: async (files) => {
+            if (!files || files.length === 0) return;
+            if (files[0].type === "application/json") {
+                const metadata = JSON.parse(await files[0].text());
+                console.log({ metadata });
+                if (metadata.start) {
+                    setTranscript((prev) => ({
+                        ...prev,
+                        offset: metadata.start,
+                    }));
+                }
+            }
+        },
+    });
+
     const { wavesurfer, isPlaying, currentTime } = useWavesurfer({
         url: track?.audio,
         container: playerRef,
@@ -283,7 +301,10 @@ export default function App() {
                 });
             }
             newTranscript.blocks.sort((a, b) => a.from - b.from);
-            setTranscript(newTranscript);
+            setTranscript((prev) => ({
+                ...(prev ?? {}),
+                ...newTranscript,
+            }));
         };
         reader.readAsText(file);
     }
@@ -647,31 +668,106 @@ export default function App() {
                         }}
                     />
                 </div>
-                <div className="flex h-full shrink-0 flex-col overflow-hidden border-l border-stone-200 bg-white">
-                    <div className="flex h-full flex-col overflow-hidden p-4">
-                        <label
-                            htmlFor="transcript-offset"
-                            className="mb-1 text-xs font-medium text-stone-500"
-                        >
-                            Offset (ms)
-                        </label>
-                        <input
-                            id="transcript-offset"
-                            type="text"
-                            accept="number"
-                            className="w-full rounded border border-stone-100 bg-stone-100 p-1 font-mono text-xs text-black slashed-zero tabular-nums hover:border-stone-200"
-                            value={transcript.offset}
-                            onChange={(e) => {
-                                setTranscript(
-                                    (prev) =>
-                                        prev && {
-                                            ...prev,
-                                            offset:
-                                                parseInt(e.target.value) ?? 0,
-                                        },
-                                );
-                            }}
-                        />
+                <div
+                    id="context-menu"
+                    className="relative flex h-full shrink-0 flex-col overflow-hidden border-l border-stone-200 bg-white"
+                    {...contextMenuDropzone.getRootProps()}
+                >
+                    {contextMenuDropzone.isDragActive && (
+                        <div className="absolute inset-0 z-20 bg-white/80 p-2">
+                            <div
+                                className={`flex h-full w-full items-center justify-center rounded-lg border-2 ${
+                                    contextMenuDropzone.isDragActive
+                                        ? "border-solid border-amber-300 bg-amber-50/50"
+                                        : "border-dashed border-stone-100/80"
+                                } ${
+                                    contextMenuDropzone.isFocused
+                                        ? "border-solid! border-amber-300! ring-3 ring-orange-300/20 hover:bg-transparent!"
+                                        : ""
+                                } ${
+                                    contextMenuDropzone.isDragReject
+                                        ? "border-solid! border-red-300! bg-red-50! ring-3 ring-red-300/20"
+                                        : ""
+                                }`}
+                            >
+                                <input
+                                    {...contextMenuDropzone.getInputProps()}
+                                />
+                                <div className="p-4 text-center select-none">
+                                    <div className="mx-auto mb-3 w-max">
+                                        {contextMenuDropzone.isDragReject ? (
+                                            <FileX
+                                                size={28}
+                                                strokeWidth={1.5}
+                                                className="text-red-600/80"
+                                            />
+                                        ) : (
+                                            <FileUp
+                                                size={28}
+                                                strokeWidth={1.5}
+                                                className="text-stone-400"
+                                            />
+                                        )}
+                                    </div>
+                                    {contextMenuDropzone.fileRejections.length >
+                                    0 ? (
+                                        <p className="mb-1 text-sm font-medium text-red-700/70">
+                                            {
+                                                contextMenuDropzone
+                                                    .fileRejections[0].errors[0]
+                                                    .message
+                                            }
+                                        </p>
+                                    ) : (
+                                        <>
+                                            <p className="mb-1 text-sm font-medium text-stone-600">
+                                                Drop metadata here
+                                            </p>
+                                            <div className="flex items-center justify-center space-x-1">
+                                                <Info
+                                                    size={15}
+                                                    className="text-stone-400"
+                                                />
+                                                <span className="inline-block text-xs font-medium text-stone-400">
+                                                    Supports JSON only
+                                                </span>
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                    <div
+                        {...contextMenuDropzone.getRootProps()}
+                        className="relative h-full w-full"
+                    >
+                        <div className="flex h-full flex-col overflow-hidden p-4">
+                            <label
+                                htmlFor="transcript-offset"
+                                className="mb-1 text-xs font-medium text-stone-500"
+                            >
+                                Offset (ms)
+                            </label>
+                            <input
+                                id="transcript-offset"
+                                type="text"
+                                accept="number"
+                                className="w-full rounded border border-stone-100 bg-stone-100 p-1 font-mono text-xs text-black slashed-zero tabular-nums hover:border-stone-200"
+                                value={transcript.offset}
+                                onChange={(e) => {
+                                    setTranscript(
+                                        (prev) =>
+                                            prev && {
+                                                ...prev,
+                                                offset:
+                                                    parseInt(e.target.value) ??
+                                                    0,
+                                            },
+                                    );
+                                }}
+                            />
+                        </div>
                     </div>
                 </div>
             </div>

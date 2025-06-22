@@ -275,24 +275,35 @@ export default function App() {
 
     function loadTranscriptFromFile(file: File) {
         const reader = new FileReader();
+
+        const duration = wavesurfer?.getDuration();
+
         reader.onload = (event) => {
             const content = event.target?.result as string;
-            const data = JSON.parse(content);
+            const data = JSON.parse(content) as Transcript;
 
             const newTranscript = {
                 startTime: data.startTime,
                 endTime: data.endTime,
-                offset: data.offset ?? 0,
+                offset: transcript.offset ?? 0, // default offset from metadata.json if already loaded
                 blocks: Array<Block>(),
             };
+
+            let offset = newTranscript.offset;
+            if (
+                duration &&
+                Math.max(...data.blocks.map((b) => b.to)) <= duration
+            ) {
+                offset = 0;
+            }
 
             for (const block of data.blocks) {
                 let region: Region | undefined;
                 if (regionsPlugin && wavesurfer) {
                     region = regionsPlugin.addRegion({
                         id: block.id,
-                        start: (block.from - newTranscript.offset) / 1_000,
-                        end: (block.to - newTranscript.offset) / 1_000,
+                        start: (block.from - offset) / 1_000,
+                        end: (block.to - offset) / 1_000,
                     });
                 }
                 newTranscript.blocks.push({
@@ -768,6 +779,19 @@ export default function App() {
                                                     ) ?? 0,
                                             },
                                     );
+
+                                    const duration = wavesurfer?.getDuration();
+                                    if (
+                                        duration &&
+                                        Math.max(
+                                            ...transcript.blocks.map(
+                                                (b) => b.to,
+                                            ),
+                                        ) <= duration
+                                    ) {
+                                        return;
+                                    }
+
                                     regionsPlugin?.clearRegions();
                                     transcript.blocks.forEach((block) => {
                                         regionsPlugin.addRegion({
@@ -783,9 +807,6 @@ export default function App() {
                                     });
                                 }}
                             />
-                            <div className="p-4 font-mono text-xs text-stone-400">
-                                {transcript.offset}
-                            </div>
                         </div>
                     </div>
                 </div>

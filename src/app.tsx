@@ -754,19 +754,38 @@ export default function App() {
                                 type="text"
                                 accept="number"
                                 className="w-full rounded border border-stone-100 bg-stone-100 p-1 font-mono text-xs text-black slashed-zero tabular-nums hover:border-stone-200"
-                                value={transcript.offset}
-                                onChange={(e) => {
+                                value={transcript.offset ?? 0}
+                                onInput={(e) => {
                                     setTranscript(
                                         (prev) =>
                                             prev && {
                                                 ...prev,
                                                 offset:
-                                                    parseInt(e.target.value) ??
-                                                    0,
+                                                    parseInt(
+                                                        (
+                                                            e.target as HTMLInputElement
+                                                        ).value,
+                                                    ) ?? 0,
                                             },
                                     );
+                                    regionsPlugin?.clearRegions();
+                                    transcript.blocks.forEach((block) => {
+                                        regionsPlugin.addRegion({
+                                            id: block.id,
+                                            start:
+                                                (block.from -
+                                                    transcript.offset) /
+                                                1_000,
+                                            end:
+                                                (block.to - transcript.offset) /
+                                                1_000,
+                                        });
+                                    });
                                 }}
                             />
+                            <div className="p-4 font-mono text-xs text-stone-400">
+                                {transcript.offset}
+                            </div>
                         </div>
                     </div>
                 </div>

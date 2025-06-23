@@ -27,6 +27,7 @@ interface Transcript {
     startTime: number;
     endTime: number;
     blocks: Block[];
+    offset: number;
 }
 interface Track {
     name: string;
@@ -39,9 +40,9 @@ export default function App() {
         blocks: [],
         endTime: 0,
         startTime: 0,
+        offset: 0,
     });
     const [track, setTrack] = useState<Track>();
-    const [project, setProject] = useState<string>();
     const [activeBlockId, setActiveBlockId] = useState<string>();
     const activeBlockIdRef = useRef(activeBlockId);
     useEffect(() => {
@@ -72,7 +73,6 @@ export default function App() {
                     .split(".")
                     .slice(0, -1)
                     .join(".");
-                setProject(projectName);
 
                 const audioContext = new AudioContext();
                 const arrayBuffer = await files[0].arrayBuffer();
@@ -99,6 +99,24 @@ export default function App() {
             if (files[0].type === "application/json") {
                 regionsPlugin?.clearRegions();
                 loadTranscriptFromFile(files[0]);
+            }
+        },
+    });
+
+    const contextMenuDropzone = useDropzone({
+        accept: { "application/json": [".json"] },
+        maxFiles: 1,
+        onDrop: async (files) => {
+            if (!files || files.length === 0) return;
+            if (files[0].type === "application/json") {
+                const metadata = JSON.parse(await files[0].text());
+                console.log({ metadata });
+                if (metadata.start) {
+                    setTranscript((prev) => ({
+                        ...prev,
+                        offset: metadata.start,
+                    }));
+                }
             }
         },
     });
@@ -159,8 +177,10 @@ export default function App() {
 
                                 return {
                                     ...block,
-                                    from: region.start * 1_000,
-                                    to: region.end * 1_000,
+                                    from:
+                                        region.start * 1_000 +
+                                        transcript.offset,
+                                    to: region.end * 1_000 + transcript.offset,
                                 };
                             })
                             .sort((a, b) => a.from - b.from),
@@ -180,8 +200,8 @@ export default function App() {
                 transcript.blocks.forEach((block) => {
                     regionsPlugin.addRegion({
                         id: block.id,
-                        start: (block.from - transcript.startTime) / 1000,
-                        end: (block.to - transcript.startTime) / 1000,
+                        start: (block.from - transcript.offset) / 1000,
+                        end: (block.to - transcript.offset) / 1000,
                     });
                 });
             }
@@ -253,23 +273,35 @@ export default function App() {
 
     function loadTranscriptFromFile(file: File) {
         const reader = new FileReader();
+
+        const duration = wavesurfer?.getDuration();
+
         reader.onload = (event) => {
             const content = event.target?.result as string;
-            const data = JSON.parse(content);
+            const data = JSON.parse(content) as Transcript;
 
             const newTranscript = {
                 startTime: data.startTime,
                 endTime: data.endTime,
+                offset: transcript.offset ?? 0, // default offset from metadata.json if already loaded
                 blocks: Array<Block>(),
             };
+
+            let offset = newTranscript.offset;
+            if (
+                duration &&
+                Math.max(...data.blocks.map((b) => b.to)) <= duration
+            ) {
+                offset = 0;
+            }
 
             for (const block of data.blocks) {
                 let region: Region | undefined;
                 if (regionsPlugin && wavesurfer) {
                     region = regionsPlugin.addRegion({
                         id: block.id,
-                        start: block.from / 1_000,
-                        end: block.to / 1_000,
+                        start: (block.from - offset) / 1_000,
+                        end: (block.to - offset) / 1_000,
                     });
                 }
                 newTranscript.blocks.push({
@@ -278,7 +310,10 @@ export default function App() {
                 });
             }
             newTranscript.blocks.sort((a, b) => a.from - b.from);
-            setTranscript(newTranscript);
+            setTranscript((prev) => ({
+                ...(prev ?? {}),
+                ...newTranscript,
+            }));
         };
         reader.readAsText(file);
     }
@@ -295,8 +330,8 @@ export default function App() {
                         ...prev.blocks,
                         {
                             id: region.id,
-                            from: region.start * 1_000,
-                            to: region.end * 1_000,
+                            from: region.start * 1_000 + transcript.offset,
+                            to: region.end * 1_000 + transcript.offset,
                             text: "",
                             source: "system" as const,
                             speaker_id: prev.blocks.at(-1)?.speaker_id,
@@ -309,162 +344,148 @@ export default function App() {
 
     return (
         <div className="flex h-screen flex-col overflow-hidden bg-stone-50">
-            <header className="grid grid-cols-3 border-b border-stone-200 bg-white">
-                <div />
-                <div className="flex items-center justify-center space-x-1 p-2 text-xs">
-                    <div className="w-full rounded-md border border-stone-200 px-3 py-1.5 shadow-xs">
-                        <input
-                            placeholder={"Untitled"}
-                            defaultValue={project}
-                            className="w-full text-center text-xs text-stone-800 focus:outline-hidden"
-                        />
-                    </div>
-                </div>
-                <div className="flex justify-end px-4 py-2">
-                    <div className="flex items-stretch divide-x divide-stone-200 overflow-hidden rounded-md border border-stone-200 bg-white focus-within:border-amber-400 focus-within:outline-solid focus-within:outline-2 focus-within:outline-orange-300/20">
-                        <button
-                            disabled={!transcript}
-                            onClick={() => {
-                                if (!transcript) return;
-                                const blob = new Blob(
-                                    [JSON.stringify(transcript, null, 4)],
-                                    { type: "application/json" },
-                                );
-                                const url = URL.createObjectURL(blob);
-                                const a = document.createElement("a");
-                                a.href = url;
-                                a.download = "groundTruth-transcript.json";
-                                document.body.appendChild(a);
-                                a.click();
-                                document.body.removeChild(a);
-                                URL.revokeObjectURL(url);
-                            }}
-                            className="cursor-default px-3 py-1.5 text-xs font-medium text-stone-800 focus:bg-amber-100/50 focus:text-amber-950"
-                        >
-                            <span>Export</span>
-                        </button>
-                        <button
-                            disabled={!transcript}
-                            onClick={async () => {
-                                if (!transcript) return;
-                                await navigator.clipboard.writeText(
-                                    JSON.stringify(transcript, null, 4),
-                                );
-                                alert(
-                                    "The transcript was copied to your clipboard.",
-                                );
-                            }}
-                            className="cursor-default p-1.5 focus:bg-amber-100/50"
-                        >
-                            <Icons.Clipboard
-                                size={14}
-                                className="text-stone-700"
-                            />
-                        </button>
-                    </div>
-                </div>
-            </header>
+            <header className="grid grid-cols-3 border-b border-stone-200 bg-white"></header>
             {/* Main Area */}
-            <div className="flex h-full grow flex-col overflow-hidden">
-                <div className="grid flex-1 grid-cols-4 gap-x-4 overflow-y-hidden px-4">
-                    {/* Editor */}
-                    <div className="col-span-3 col-start-2 flex max-w-xl flex-col overflow-y-hidden border-x border-stone-200 bg-white xl:col-span-2 xl:col-start-2 xl:max-w-3xl">
-                        <div
-                            {...transcriptDropzone.getRootProps()}
-                            className="group/dropzone relative h-full w-full flex-1 overflow-y-hidden focus:outline-hidden"
-                        >
-                            {(transcript?.blocks?.length === 0 ||
-                                transcriptDropzone.isDragActive) && (
-                                <div className="group absolute inset-0 z-10 h-full bg-white/80 p-2 group-focus/dropzone:border-solid group-focus/dropzone:outline-2">
-                                    <div
-                                        className={`flex h-full w-full items-center justify-center rounded-lg border-2 group-hover:border-solid group-hover:border-stone-100 group-hover:bg-stone-50/80 group-active:border-solid group-active:border-amber-300 ${
-                                            transcriptDropzone.isDragActive
-                                                ? "border-solid border-amber-300 bg-amber-50/50"
-                                                : "border-dashed border-stone-100/80"
-                                        } ${transcriptDropzone.isFocused ? "border-solid! border-amber-300! ring-3 ring-orange-300/20 hover:bg-transparent!" : ""} ${
-                                            transcriptDropzone.isDragReject
-                                                ? "border-solid! border-red-300! bg-red-50! ring-3 ring-red-300/20"
-                                                : ""
-                                        }`}
-                                    >
-                                        <input
-                                            {...transcriptDropzone.getInputProps()}
-                                        />
-                                        <div className="select-none p-4 text-center">
-                                            <div className="mx-auto mb-3 w-max">
-                                                {transcriptDropzone.isDragReject ? (
-                                                    <FileX
-                                                        size={28}
-                                                        strokeWidth={1.5}
-                                                        className="text-red-600/80"
-                                                    />
-                                                ) : (
-                                                    <FileUp
-                                                        size={28}
-                                                        strokeWidth={1.5}
-                                                        className="text-stone-400"
-                                                    />
-                                                )}
-                                            </div>
-                                            {transcriptDropzone.fileRejections
-                                                .length > 0 ? (
-                                                <p className="mb-1 text-sm font-medium text-red-700/70">
-                                                    {
-                                                        transcriptDropzone
-                                                            .fileRejections[0]
-                                                            .errors[0].message
-                                                    }
-                                                </p>
-                                            ) : (
-                                                <>
-                                                    <p className="mb-1 text-sm font-medium text-stone-600">
-                                                        Drag & drop transcript
-                                                        here,{" "}
-                                                        <button
-                                                            className={`m-0 p-0 ${trackDropzone.isDragReject ? "text-red-600/80" : "text-amber-600"} underline underline-offset-2 focus:outline-hidden`}
-                                                            tabIndex={-1}
-                                                        >
-                                                            or click to browse
-                                                        </button>
-                                                    </p>
-                                                    <div className="flex items-center justify-center space-x-1">
-                                                        <Info
-                                                            size={15}
+            <div className="flex h-full grow overflow-hidden">
+                <div className="flex h-full grow flex-col overflow-hidden">
+                    <div className="grid flex-1 grid-cols-4 gap-x-4 overflow-y-hidden px-4 pt-4">
+                        {/* Editor */}
+                        <div className="col-span-3 col-start-2 flex max-w-xl flex-col overflow-y-hidden rounded-t-lg border-x border-t border-stone-200 bg-white xl:col-span-2 xl:col-start-2 xl:max-w-3xl">
+                            <div
+                                {...transcriptDropzone.getRootProps()}
+                                className="group/dropzone relative h-full w-full flex-1 overflow-y-hidden focus:outline-hidden"
+                            >
+                                {(transcript?.blocks?.length === 0 ||
+                                    transcriptDropzone.isDragActive) && (
+                                    <div className="group absolute inset-0 z-10 h-full bg-white/80 p-2 group-focus/dropzone:border-solid group-focus/dropzone:outline-2">
+                                        <div
+                                            className={`flex h-full w-full items-center justify-center rounded-lg border-2 group-hover:border-solid group-hover:border-stone-100 group-hover:bg-stone-50/80 group-active:border-solid group-active:border-amber-300 ${
+                                                transcriptDropzone.isDragActive
+                                                    ? "border-solid border-amber-300 bg-amber-50/50"
+                                                    : "border-dashed border-stone-100/80"
+                                            } ${transcriptDropzone.isFocused ? "border-solid! border-amber-300! ring-3 ring-orange-300/20 hover:bg-transparent!" : ""} ${
+                                                transcriptDropzone.isDragReject
+                                                    ? "border-solid! border-red-300! bg-red-50! ring-3 ring-red-300/20"
+                                                    : ""
+                                            }`}
+                                        >
+                                            <input
+                                                {...transcriptDropzone.getInputProps()}
+                                            />
+                                            <div className="p-4 text-center select-none">
+                                                <div className="mx-auto mb-3 w-max">
+                                                    {transcriptDropzone.isDragReject ? (
+                                                        <FileX
+                                                            size={28}
+                                                            strokeWidth={1.5}
+                                                            className="text-red-600/80"
+                                                        />
+                                                    ) : (
+                                                        <FileUp
+                                                            size={28}
+                                                            strokeWidth={1.5}
                                                             className="text-stone-400"
                                                         />
-                                                        <span className="inline-block text-xs font-medium text-stone-400">
-                                                            Supports JSON only
-                                                        </span>
-                                                    </div>
-                                                </>
-                                            )}
+                                                    )}
+                                                </div>
+                                                {transcriptDropzone
+                                                    .fileRejections.length >
+                                                0 ? (
+                                                    <p className="mb-1 text-sm font-medium text-red-700/70">
+                                                        {
+                                                            transcriptDropzone
+                                                                .fileRejections[0]
+                                                                .errors[0]
+                                                                .message
+                                                        }
+                                                    </p>
+                                                ) : (
+                                                    <>
+                                                        <p className="mb-1 text-sm font-medium text-stone-600">
+                                                            Drag & drop
+                                                            transcript here,{" "}
+                                                            <button
+                                                                className={`m-0 p-0 ${trackDropzone.isDragReject ? "text-red-600/80" : "text-amber-600"} underline underline-offset-2 focus:outline-hidden`}
+                                                                tabIndex={-1}
+                                                            >
+                                                                or click to
+                                                                browse
+                                                            </button>
+                                                        </p>
+                                                        <div className="flex items-center justify-center space-x-1">
+                                                            <Info
+                                                                size={15}
+                                                                className="text-stone-400"
+                                                            />
+                                                            <span className="inline-block text-xs font-medium text-stone-400">
+                                                                Supports JSON
+                                                                only
+                                                            </span>
+                                                        </div>
+                                                    </>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            )}
+                                )}
 
-                            {transcript?.blocks &&
-                                transcript?.blocks.length > 0 && (
-                                    <div className="h-full overflow-y-auto py-8">
-                                        {transcript?.blocks.map(
-                                            (currentBlock) => (
-                                                <div
-                                                    key={currentBlock.id}
-                                                    tabIndex={0}
-                                                    onFocus={() =>
-                                                        setActiveBlockId(
-                                                            currentBlock.id,
-                                                        )
-                                                    }
-                                                    className="group relative rounded outline-solid outline-1 -outline-offset-1 outline-transparent ring-2 ring-transparent focus-within:outline-amber-400 focus-within:ring-orange-300/20 hover:outline-amber-400 hover:ring-orange-300/20"
-                                                >
-                                                    <div className="absolute left-2 top-0">
-                                                        <input
-                                                            type="text"
-                                                            name="speaker"
-                                                            className="max-w-[10ch] -translate-y-2/3 rounded-sm border border-stone-50 bg-white/50 px-1 py-0.5 text-xs text-stone-400 ring-orange-300/20 backdrop-blur-[2px] focus:visible focus:border-amber-400 focus:text-stone-600 focus:outline-hidden focus:ring-2"
+                                {transcript?.blocks &&
+                                    transcript?.blocks.length > 0 && (
+                                        <div className="h-full overflow-y-auto py-8">
+                                            {transcript?.blocks.map(
+                                                (currentBlock) => (
+                                                    <div
+                                                        key={currentBlock.id}
+                                                        tabIndex={0}
+                                                        onFocus={() =>
+                                                            setActiveBlockId(
+                                                                currentBlock.id,
+                                                            )
+                                                        }
+                                                        className="group relative rounded ring-2 ring-transparent outline-1 -outline-offset-1 outline-transparent outline-solid focus-within:ring-orange-300/20 focus-within:outline-amber-400 hover:ring-orange-300/20 hover:outline-amber-400"
+                                                    >
+                                                        <div className="absolute top-0 left-2">
+                                                            <input
+                                                                type="text"
+                                                                name="speaker"
+                                                                className="max-w-[10ch] -translate-y-2/3 rounded-sm border border-stone-50 bg-white/50 px-1 py-0.5 text-xs text-stone-400 ring-orange-300/20 backdrop-blur-[2px] focus:visible focus:border-amber-400 focus:text-stone-600 focus:ring-2 focus:outline-hidden"
+                                                                defaultValue={
+                                                                    currentBlock.speaker_id
+                                                                }
+                                                                onChange={(
+                                                                    e,
+                                                                ) => {
+                                                                    setTranscript(
+                                                                        (
+                                                                            prev,
+                                                                        ) =>
+                                                                            prev && {
+                                                                                ...prev,
+                                                                                blocks: prev.blocks.map(
+                                                                                    (
+                                                                                        block,
+                                                                                    ) =>
+                                                                                        block.id !==
+                                                                                        currentBlock.id
+                                                                                            ? block
+                                                                                            : {
+                                                                                                  ...currentBlock,
+                                                                                                  speaker_id:
+                                                                                                      e
+                                                                                                          .target
+                                                                                                          .value,
+                                                                                              },
+                                                                                ),
+                                                                            },
+                                                                    );
+                                                                }}
+                                                            />
+                                                        </div>
+                                                        <TextareaAutosize
+                                                            minRows={1}
+                                                            name="transcription"
                                                             defaultValue={
-                                                                currentBlock.speaker_id
+                                                                currentBlock.text
                                                             }
                                                             onChange={(e) => {
                                                                 setTranscript(
@@ -480,77 +501,156 @@ export default function App() {
                                                                                         ? block
                                                                                         : {
                                                                                               ...currentBlock,
-                                                                                              speaker_id:
-                                                                                                  e
-                                                                                                      .target
-                                                                                                      .value,
+                                                                                              text: e
+                                                                                                  .target
+                                                                                                  .value,
                                                                                           },
                                                                             ),
                                                                         },
                                                                 );
                                                             }}
+                                                            className={`mx-auto flex w-full max-w-2xl resize-none rounded-lg bg-white pt-4 pr-8 pb-5 pl-6 text-sm text-stone-800 focus:outline-hidden ${activeBlockId === currentBlock.id ? "text-opacity-100" : "text-opacity-50"}`}
                                                         />
                                                     </div>
-                                                    <TextareaAutosize
-                                                        minRows={1}
-                                                        name="transcription"
-                                                        defaultValue={
-                                                            currentBlock.text
-                                                        }
-                                                        onChange={(e) => {
-                                                            setTranscript(
-                                                                (prev) =>
-                                                                    prev && {
-                                                                        ...prev,
-                                                                        blocks: prev.blocks.map(
-                                                                            (
-                                                                                block,
-                                                                            ) =>
-                                                                                block.id !==
-                                                                                currentBlock.id
-                                                                                    ? block
-                                                                                    : {
-                                                                                          ...currentBlock,
-                                                                                          text: e
-                                                                                              .target
-                                                                                              .value,
-                                                                                      },
-                                                                        ),
-                                                                    },
-                                                            );
-                                                        }}
-                                                        className={`mx-auto flex w-full max-w-2xl resize-none rounded-lg bg-white pb-5 pl-6 pr-8 pt-4 text-sm text-stone-800 focus:outline-hidden ${activeBlockId === currentBlock.id ? "text-opacity-100" : "text-opacity-50"}`}
-                                                    />
-                                                </div>
-                                            ),
-                                        )}
-                                    </div>
-                                )}
+                                                ),
+                                            )}
+                                        </div>
+                                    )}
+                            </div>
                         </div>
                     </div>
+                    {/* Player */}
+                    <div
+                        {...trackDropzone.getRootProps()}
+                        className="group/dropzone relative h-[140px] border-y border-stone-200 bg-white focus:outline-hidden"
+                    >
+                        {(!track?.audio || trackDropzone.isDragActive) && (
+                            <div className="group absolute inset-0 z-10 bg-white/80 p-2">
+                                <div
+                                    className={`flex h-full w-full items-center justify-center rounded-lg border-2 group-hover:border-solid group-hover:border-stone-100 group-hover:bg-stone-50/80 group-active:border-solid group-active:border-amber-300 ${
+                                        trackDropzone.isDragActive
+                                            ? "border-solid border-amber-300 bg-amber-50/50"
+                                            : "border-dashed border-stone-100/80"
+                                    } ${trackDropzone.isFocused ? "border-solid! border-amber-300! ring-3 ring-orange-300/20 hover:bg-transparent!" : ""} ${
+                                        trackDropzone.isDragReject
+                                            ? "border-solid! border-red-300! bg-red-50! ring-3 ring-red-300/20"
+                                            : ""
+                                    }`}
+                                >
+                                    <input {...trackDropzone.getInputProps()} />
+                                    <div className="p-4 text-center select-none">
+                                        <div className="mx-auto mb-3 w-max">
+                                            {trackDropzone.isDragReject ? (
+                                                <FileX
+                                                    size={28}
+                                                    strokeWidth={1.5}
+                                                    className="text-red-600/80"
+                                                />
+                                            ) : (
+                                                <FileUp
+                                                    size={28}
+                                                    strokeWidth={1.5}
+                                                    className="text-stone-400"
+                                                />
+                                            )}
+                                        </div>
+                                        {trackDropzone.fileRejections.length >
+                                        0 ? (
+                                            <p className="mb-1 text-sm font-medium text-red-700/70">
+                                                {
+                                                    trackDropzone
+                                                        .fileRejections[0]
+                                                        .errors[0].message
+                                                }
+                                            </p>
+                                        ) : (
+                                            <>
+                                                <p className="mb-1 text-sm font-medium text-stone-600">
+                                                    Drag & drop audio file here,{" "}
+                                                    <button
+                                                        className={`m-0 p-0 ${trackDropzone.isDragReject ? "text-red-600/80" : "text-amber-600"} underline underline-offset-2 focus:outline-hidden`}
+                                                        tabIndex={-1}
+                                                    >
+                                                        or click to browse
+                                                    </button>
+                                                </p>
+                                                <div className="flex items-center justify-center space-x-1">
+                                                    <Info
+                                                        size={15}
+                                                        className="text-stone-400"
+                                                    />
+                                                    <span className="inline-block text-xs font-medium text-stone-400">
+                                                        Supports WAV and M4A
+                                                        (16kHz, 16-bit, mono)
+                                                    </span>
+                                                </div>
+                                            </>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {track?.audio && (
+                            <div className="flex h-full flex-col justify-end">
+                                <div id="waveform" ref={playerRef} />
+                            </div>
+                        )}
+                    </div>
+                    {/* Controls */}
+                    <Controls
+                        currentTime={currentTime}
+                        duration={wavesurfer?.getDuration() || 0}
+                        isPlaying={isPlaying}
+                        onChange={(kv) => {
+                            if (kv["playbackSpeed"]) {
+                                wavesurfer?.setOptions({
+                                    audioRate: kv["playbackSpeed"],
+                                });
+                            }
+                            if (kv["time"]) {
+                                wavesurfer?.setTime(kv["time"]);
+                            }
+                            if (kv["zoom"]) {
+                                wavesurfer?.zoom(kv["zoom"]);
+                            }
+                        }}
+                        onPlayPause={() => {
+                            wavesurfer?.playPause();
+                        }}
+                        onSkip={(step) => {
+                            wavesurfer?.skip(step);
+                        }}
+                    />
                 </div>
-                {/* Player */}
                 <div
-                    {...trackDropzone.getRootProps()}
-                    className="group/dropzone relative h-[140px] border-y border-stone-200 bg-white focus:outline-hidden"
+                    id="context-menu"
+                    className="relative flex h-full shrink-0 flex-col overflow-hidden border-l border-stone-200 bg-white"
+                    {...contextMenuDropzone.getRootProps()}
                 >
-                    {(!track?.audio || trackDropzone.isDragActive) && (
-                        <div className="group absolute inset-0 z-10 bg-white/80 p-2">
+                    {contextMenuDropzone.isDragActive && (
+                        <div className="absolute inset-0 z-20 bg-white/80 p-2">
                             <div
-                                className={`flex h-full w-full items-center justify-center rounded-lg border-2 group-hover:border-solid group-hover:border-stone-100 group-hover:bg-stone-50/80 group-active:border-solid group-active:border-amber-300 ${
-                                    trackDropzone.isDragActive
+                                className={`flex h-full w-full items-center justify-center rounded-lg border-2 ${
+                                    contextMenuDropzone.isDragActive
                                         ? "border-solid border-amber-300 bg-amber-50/50"
                                         : "border-dashed border-stone-100/80"
-                                } ${trackDropzone.isFocused ? "border-solid! border-amber-300! ring-3 ring-orange-300/20 hover:bg-transparent!" : ""} ${
-                                    trackDropzone.isDragReject
+                                } ${
+                                    contextMenuDropzone.isFocused
+                                        ? "border-solid! border-amber-300! ring-3 ring-orange-300/20 hover:bg-transparent!"
+                                        : ""
+                                } ${
+                                    contextMenuDropzone.isDragReject
                                         ? "border-solid! border-red-300! bg-red-50! ring-3 ring-red-300/20"
                                         : ""
                                 }`}
                             >
-                                <input {...trackDropzone.getInputProps()} />
-                                <div className="select-none p-4 text-center">
+                                <input
+                                    {...contextMenuDropzone.getInputProps()}
+                                />
+                                <div className="p-4 text-center select-none">
                                     <div className="mx-auto mb-3 w-max">
-                                        {trackDropzone.isDragReject ? (
+                                        {contextMenuDropzone.isDragReject ? (
                                             <FileX
                                                 size={28}
                                                 strokeWidth={1.5}
@@ -564,23 +664,19 @@ export default function App() {
                                             />
                                         )}
                                     </div>
-                                    {trackDropzone.fileRejections.length > 0 ? (
+                                    {contextMenuDropzone.fileRejections.length >
+                                    0 ? (
                                         <p className="mb-1 text-sm font-medium text-red-700/70">
                                             {
-                                                trackDropzone.fileRejections[0]
-                                                    .errors[0].message
+                                                contextMenuDropzone
+                                                    .fileRejections[0].errors[0]
+                                                    .message
                                             }
                                         </p>
                                     ) : (
                                         <>
                                             <p className="mb-1 text-sm font-medium text-stone-600">
-                                                Drag & drop audio file here,{" "}
-                                                <button
-                                                    className={`m-0 p-0 ${trackDropzone.isDragReject ? "text-red-600/80" : "text-amber-600"} underline underline-offset-2 focus:outline-hidden`}
-                                                    tabIndex={-1}
-                                                >
-                                                    or click to browse
-                                                </button>
+                                                Drop metadata here
                                             </p>
                                             <div className="flex items-center justify-center space-x-1">
                                                 <Info
@@ -588,8 +684,7 @@ export default function App() {
                                                     className="text-stone-400"
                                                 />
                                                 <span className="inline-block text-xs font-medium text-stone-400">
-                                                    Supports WAV and M4A (16kHz,
-                                                    16-bit, mono)
+                                                    Supports JSON only
                                                 </span>
                                             </div>
                                         </>
@@ -598,38 +693,117 @@ export default function App() {
                             </div>
                         </div>
                     )}
-
-                    {track?.audio && (
-                        <div className="flex h-full flex-col justify-end">
-                            <div id="waveform" ref={playerRef} />
+                    <div
+                        {...contextMenuDropzone.getRootProps()}
+                        className="relative h-full w-full"
+                    >
+                        <div className="border-b border-stone-200 p-4">
+                            <div className="flex items-stretch divide-x divide-stone-200 overflow-hidden rounded-md border border-b border-stone-200 bg-white focus-within:border-amber-400 focus-within:outline-2 focus-within:outline-orange-300/20 focus-within:outline-solid">
+                                <button
+                                    disabled={!transcript}
+                                    onClick={() => {
+                                        if (!transcript) return;
+                                        const blob = new Blob(
+                                            [
+                                                JSON.stringify(
+                                                    transcript,
+                                                    null,
+                                                    4,
+                                                ),
+                                            ],
+                                            { type: "application/json" },
+                                        );
+                                        const url = URL.createObjectURL(blob);
+                                        const a = document.createElement("a");
+                                        a.href = url;
+                                        a.download =
+                                            "groundTruth-transcript.json";
+                                        document.body.appendChild(a);
+                                        a.click();
+                                        document.body.removeChild(a);
+                                        URL.revokeObjectURL(url);
+                                    }}
+                                    className="grow cursor-default px-3 py-1.5 text-xs font-medium text-stone-800 focus:bg-amber-100/50 focus:text-amber-950"
+                                >
+                                    <span>Export</span>
+                                </button>
+                                <button
+                                    disabled={!transcript}
+                                    onClick={async () => {
+                                        if (!transcript) return;
+                                        await navigator.clipboard.writeText(
+                                            JSON.stringify(transcript, null, 4),
+                                        );
+                                        alert(
+                                            "The transcript was copied to your clipboard.",
+                                        );
+                                    }}
+                                    className="cursor-default p-1.5 focus:bg-amber-100/50"
+                                >
+                                    <Icons.Clipboard
+                                        size={14}
+                                        className="text-stone-700"
+                                    />
+                                </button>
+                            </div>
                         </div>
-                    )}
+                        <div className="flex h-full flex-col overflow-hidden p-4">
+                            <label
+                                htmlFor="transcript-offset"
+                                className="mb-1 text-xs font-medium text-stone-500"
+                            >
+                                Offset (ms)
+                            </label>
+                            <input
+                                id="transcript-offset"
+                                type="text"
+                                accept="number"
+                                className="w-full rounded border border-stone-100 bg-stone-100 p-1 font-mono text-xs text-black slashed-zero tabular-nums hover:border-stone-200"
+                                value={transcript.offset ?? 0}
+                                onInput={(e) => {
+                                    setTranscript(
+                                        (prev) =>
+                                            prev && {
+                                                ...prev,
+                                                offset:
+                                                    parseInt(
+                                                        (
+                                                            e.target as HTMLInputElement
+                                                        ).value,
+                                                    ) ?? 0,
+                                            },
+                                    );
+
+                                    const duration = wavesurfer?.getDuration();
+                                    if (
+                                        duration &&
+                                        Math.max(
+                                            ...transcript.blocks.map(
+                                                (b) => b.to,
+                                            ),
+                                        ) <= duration
+                                    ) {
+                                        return;
+                                    }
+
+                                    regionsPlugin?.clearRegions();
+                                    transcript.blocks.forEach((block) => {
+                                        regionsPlugin.addRegion({
+                                            id: block.id,
+                                            start:
+                                                (block.from -
+                                                    transcript.offset) /
+                                                1_000,
+                                            end:
+                                                (block.to - transcript.offset) /
+                                                1_000,
+                                        });
+                                    });
+                                }}
+                            />
+                        </div>
+                    </div>
                 </div>
-                {/* Controls */}
-                <Controls
-                    currentTime={currentTime}
-                    duration={wavesurfer?.getDuration() || 0}
-                    isPlaying={isPlaying}
-                    onChange={(kv) => {
-                        if (kv["playbackSpeed"]) {
-                            wavesurfer?.setOptions({
-                                audioRate: kv["playbackSpeed"],
-                            });
-                        }
-                        if (kv["time"]) {
-                            wavesurfer?.setTime(kv["time"]);
-                        }
-                        if (kv["zoom"]) {
-                            wavesurfer?.zoom(kv["zoom"]);
-                        }
-                    }}
-                    onPlayPause={() => {
-                        wavesurfer?.playPause();
-                    }}
-                    onSkip={(step) => {
-                        wavesurfer?.skip(step);
-                    }}
-                />
             </div>
         </div>
     );

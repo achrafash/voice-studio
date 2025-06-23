@@ -43,7 +43,6 @@ export default function App() {
         offset: 0,
     });
     const [track, setTrack] = useState<Track>();
-    const [project, setProject] = useState<string>();
     const [activeBlockId, setActiveBlockId] = useState<string>();
     const activeBlockIdRef = useRef(activeBlockId);
     useEffect(() => {
@@ -74,7 +73,6 @@ export default function App() {
                     .split(".")
                     .slice(0, -1)
                     .join(".");
-                setProject(projectName);
 
                 const audioContext = new AudioContext();
                 const arrayBuffer = await files[0].arrayBuffer();
